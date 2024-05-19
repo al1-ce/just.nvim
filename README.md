@@ -25,4 +25,5 @@ require("just").setup({
 ```
 
 ## [More info](https://github.com/al1-ce/just.nvim/blob/master/primer.md)
+Click the link
 
