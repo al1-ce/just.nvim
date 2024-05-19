@@ -640,7 +640,11 @@ export function add_build_template(): void {
     f.write(
         `#!/usr/bin/env -S just --justfile` + '\n' +
         `# just reference  : https://just.systems/man/en/` + '\n' +
-        `# just.nvim flavor: https://github.com/al1-ce/just.nvim/primer.md` + '\n\n'
+        `` + '\n' +
+        `@default:` + '\n' +
+        `    just --list` + '\n' +
+        `` + '\n' +
+        `` + '\n'
     );
     f.close();
 

@@ -849,7 +849,7 @@ function ____exports.add_build_template()
         end
     end
     local f = io.open(pjustfile, "w")
-    f:write((((("#!/usr/bin/env -S just --justfile" .. "\n") .. "# just reference  : https://just.systems/man/en/") .. "\n") .. "# just.nvim flavor: https://github.com/al1-ce/just.nvim/primer.md") .. "\n\n")
+    f:write((((((((((((("#!/usr/bin/env -S just --justfile" .. "\n") .. "# just reference  : https://just.systems/man/en/") .. "\n") .. "") .. "\n") .. "@default:") .. "\n") .. "    just --list") .. "\n") .. "") .. "\n") .. "") .. "\n")
     f:close()
     popup("Template justfile created", "info", "Build")
 end

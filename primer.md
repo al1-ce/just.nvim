@@ -15,9 +15,9 @@ Only one task can be executed at same time.
 ### Config
 You can configure your build tasks with justfile located in your Current Directory. These tasks are local and will be displayed only for this local project.
 
-Any output coming from executing tasks will be directed into *quickfix* and *fidget* and upon completing/failing task the bell will play using `just.nvim/lua/just/build_success.wav` or `just.nvim/lua/just//build_error.wav` accordingly. This can be changed in [lua/plugins.justbuild.lua](lua/plugins.justbuild.lua) or same file in typescript (preferred, but requires executing TypescriptToLua and executing `tstl -p tsconfig.json`)
+Any output coming from executing tasks will be directed into *quickfix* and *fidget* and upon completing/failing task the bell will play using `lua/just/build_success.wav` or `lua/just/build_error.wav` accordingly. This can be changed in `lua/just/init.lua` or same file in typescript (preferred, but requires executing TypescriptToLua and executing `tstl -p tsconfig.json`)
 
-Sound can be disabled by passing `{ play_sound = false }` to config.
+Sound can be disabled by passing `{ play_sound = false }` to setup.
 
 #### Basic justfile configuration
 This configuration if called with `JustBuild` from any Lua file will execute `init.lua` in project root (pwd/cwd) directory.
