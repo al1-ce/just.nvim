@@ -1,0 +1,40 @@
+{
+    "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["esnext"],
+        "moduleResolution": "node",
+        "types": [],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "plugins": [
+            { "name": "typescript-tstl-plugin" }
+        ]
+    },
+    "tstl": {
+        "luaTarget": "5.1",
+        "noHeader": true,
+        "noImplicitSelf": true,
+        "noImplicitGlobalVariables": true,
+        "luaLibImport": "inline",
+        "luaBundleEntry": "lua/just/init.ts",
+        "luaBundle": "lua/just/init.lua",
+        "noResolvePaths": [
+            "telescope",
+            "telescope.pickers",
+            "telescope.finders",
+            "telescope.config",
+            "telescope.themes",
+            "telescope.actions",
+            "telescope.actions.state",
+            "notify",
+            "plenary.job",
+            "fidget.progress",
+            "fidget.notification"
+        ]
+    }
+}
+
