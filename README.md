@@ -2,7 +2,7 @@
 Just task runner for neovim
 
 ## Installation
-Using [just](https://github.com/folke/lazy.nvim)
+Using [lazy](https://github.com/folke/lazy.nvim)
 ```lua
 {
     "al1-ce/just.nvim",
