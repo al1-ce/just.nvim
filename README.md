@@ -3,15 +3,19 @@
 
 ## Screenshots
 Example just file (defailt JustCreateTemplate with added build task)
+
 ![example](readme/just-file.png)
 
 Fidget hint
+
 ![example](readme/just-fidget.png)
 
 Output of `:JustBuild`
+
 ![example](readme/just-qf.png)
 
 `:JustSelect`
+
 ![example](readme/just-select.png)
 
 ## Installation
