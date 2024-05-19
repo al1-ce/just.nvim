@@ -1,25 +1,6 @@
 # Building using just
 
-### How to build file/project
-Commands:
-- `JustDefault` - Builds current file/project using `default` task.
-- `JustBuild` - Builds current file/project using `build` task.
-- `JustRun` - Builds current file/project using `run` task.
-- `JustTest` - Builds current file/project using `test` task.
-- `JustSelect` - Gives you selection of all tasks in `justdfile`.
-- `JustStop` - Stops currently executed task
-- `JustCreateTemplate` - Creates template `justdfile` with included "cheatsheet".
-
-Only one task can be executed at same time.
-
-### Config
-You can configure your build tasks with justfile located in your Current Directory. These tasks are local and will be displayed only for this local project.
-
-Any output coming from executing tasks will be directed into *quickfix* and *fidget* and upon completing/failing task the bell will play using `lua/just/build_success.wav` or `lua/just/build_error.wav` accordingly. This can be changed in `lua/just/init.lua` or same file in typescript (preferred, but requires executing TypescriptToLua and executing `tstl -p tsconfig.json`)
-
-Sound can be disabled by passing `{ play_sound = false }` to setup.
-
-#### Basic justfile configuration
+## Basic justfile configuration
 This configuration if called with `JustBuild` from any Lua file will execute `init.lua` in project root (pwd/cwd) directory.
 ```conf
 # Runs lua project
@@ -27,7 +8,7 @@ build:
     lua init.lua
 ```
 
-#### Filename prompt
+## Filename prompt
 If you want to have prompt that's going to ask you for input you need to enable positional arguments with `set positional-arguments` (only once per file) and write any amount of arguments you like.
 ```conf
 set positional-arguments
@@ -36,7 +17,7 @@ run File:
     lua $1
 ```
 
-#### Use current file
+## Use current file
 just.nvim also supports ["keywords"](#argument-keywords-macros) (or macros) arguments which will not trigger any prompts, but instead will insert their contents instead.
 
 ```conf
@@ -46,7 +27,7 @@ run FILEPATH:
     lua $1
 ```
 
-#### Advanced keyword use
+## Advanced keyword use
 Also keywords can be chained to be able to manipulate them inside of task. It is recommended to add bash (or shell of your choice) shebang (`#!/bin/bash`) after task name.
 ```conf
 set positional-arguments
@@ -56,7 +37,7 @@ log RELDIR FILENOEXT DATE TIME CWD Message:
     echo $1/$2 $3 $4: $6 >> $5/logfile.log
 ```
 
-#### Define aliases, requirements and variables
+## Define aliases, requirements and variables
 ```conf
 set positional-arguments
 
@@ -79,9 +60,9 @@ io_h:
     gcc io.h {{CFLAGS}}
 ```
 
-#### Further reading on how to use `justfile` can be continued on [just github page](https://github.com/casey/just).
+## Further reading on how to use `justfile` can be continued on [just github page](https://github.com/casey/just).
 
-### Argument keywords (macros)
+## Argument keywords (macros)
 Keywords are always fully in upper case and will not trigger any prompts.
 
 List of keywords:
@@ -100,10 +81,10 @@ List of keywords:
 - **PCNAME** - your PC name (`VimEnjoyer2006PC`). **POSIX (LINUX) ONLY**
 - **OS** - your OS (`Linux`). **POSIX (LINUX) ONLY**
 
-### Errors
+## Errors
 - If you are getting error that contains "__TS__StringSplit" and "find" when trying to use any of build tasks then there's probably an error with your default shell (i.e. fish printing welcome message in non-interactive (not in terminal) mode) which might result in vim.fn.shell outputing rubbish instead of contents of justfile.
 
-### Cheatsheet
+## Cheatsheet
 Set a variable (variable case is arbitrary)
 ```
 SINGLE := "--single"
