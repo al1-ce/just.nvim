@@ -460,7 +460,7 @@ function build_runner(build_name: string): void {
                         handle.message = "Failed";
                         handle.finish();
                         status = "Failed";
-                        vim.cmd("copen");
+                        if (COPEN_ON_ERROR) vim.cmd("copen");
                     }
                 }
                 vim.fn.setqflist([
@@ -653,16 +653,26 @@ export function add_build_template(): void {
     popup("Template justfile created", "info", "Build");
 }
 
+function tableToDict(tbl: any) {
+    let out: any = {};
+    for (let [key, value] of Object.entries(tbl)) {
+        out[key] = value;
+    }
+    return out;
+}
+
 function getBoolOption(opts: any, key: string, p_default: boolean): boolean {
     if (key in opts) {
         if (opts[key] == true) return true;
-        if (opts[key] == false) return true;
+        if (opts[key] == false) return false;
     }
     return p_default;
 }
 
 export function setup(opts: any): void {
     // TODO: telescope config
+    opts = tableToDict(opts);
+    // if ("play_sound" in opts) { if (opts.play_sound != true) PLAY_SOUND = false; }
     PLAY_SOUND = getBoolOption(opts, "play_sound", false);
     COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true);
     vim.api.nvim_create_user_command("JustDefault", run_task_default, { desc: "Run default task with just" })

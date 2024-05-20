@@ -283,6 +283,16 @@ local function __TS__StringSlice(self, start, ____end)
     end
     return string.sub(self, start, ____end)
 end
+
+local function __TS__ObjectEntries(obj)
+    local result = {}
+    local len = 0
+    for key in pairs(obj) do
+        len = len + 1
+        result[len] = {key, obj[key]}
+    end
+    return result
+end
 -- End of Lua Library inline imports
 local ____exports = {}
 local pickers = require("telescope.pickers")
@@ -628,7 +638,9 @@ local function build_runner(build_name)
                             handle.message = "Failed"
                             handle:finish()
                             status = "Failed"
-                            vim.cmd("copen")
+                            if COPEN_ON_ERROR then
+                                vim.cmd("copen")
+                            end
                         end
                     end
                     vim.fn.setqflist(
@@ -855,18 +867,28 @@ function ____exports.add_build_template()
     f:close()
     popup("Template justfile created", "info", "Build")
 end
+local function tableToDict(tbl)
+    local out = {}
+    for ____, ____value in ipairs(__TS__ObjectEntries(tbl)) do
+        local key = ____value[1]
+        local value = ____value[2]
+        out[key] = value
+    end
+    return out
+end
 local function getBoolOption(opts, key, p_default)
     if opts[key] ~= nil then
         if opts[key] == true then
             return true
         end
         if opts[key] == false then
-            return true
+            return false
         end
     end
     return p_default
 end
 function ____exports.setup(opts)
+    opts = tableToDict(opts)
     PLAY_SOUND = getBoolOption(opts, "play_sound", false)
     COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true)
     vim.api.nvim_create_user_command("JustDefault", ____exports.run_task_default, {desc = "Run default task with just"})
