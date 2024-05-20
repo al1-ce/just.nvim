@@ -330,6 +330,7 @@ function get_build_args(build_name: string): string[] {
 
 const MESSAGE_LIMIT = 32; // 15 is around cutoff of first word
 let PLAY_SOUND = false;
+let COPEN_ON_ERROR = true;
 
 // doesnt include aliases
 function build_runner(build_name: string): void {
@@ -458,7 +459,8 @@ function build_runner(build_name: string): void {
                     } else {
                         handle.message = "Failed";
                         handle.finish();
-                        status = "Failed"
+                        status = "Failed";
+                        vim.cmd("copen");
                     }
                 }
                 vim.fn.setqflist([
@@ -651,11 +653,18 @@ export function add_build_template(): void {
     popup("Template justfile created", "info", "Build");
 }
 
+function getBoolOption(opts: any, key: string, p_default: boolean): boolean {
+    if (key in opts) {
+        if (opts[key] == true) return true;
+        if (opts[key] == false) return true;
+    }
+    return p_default;
+}
+
 export function setup(opts: any): void {
     // TODO: telescope config
-    if ("play_sound" in opts) {
-        if (opts.play_sound == true) { PLAY_SOUND = true; }
-    }
+    PLAY_SOUND = getBoolOption(opts, "play_sound", false);
+    COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true);
     vim.api.nvim_create_user_command("JustDefault", run_task_default, { desc: "Run default task with just" })
     vim.api.nvim_create_user_command("JustBuild", run_task_build, { desc: "Run build task with just" })
     vim.api.nvim_create_user_command("JustRun", run_task_run, { desc: "Run run task with just" })

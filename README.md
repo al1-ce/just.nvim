@@ -38,6 +38,7 @@ Default config is:
 ```
 require("just").setup({
     play_sound = false, -- plays sound when task is finished or failed
+    open_qf_on_error = true, -- opens quickfix when task fails
 })
 ```
 

@@ -527,6 +527,7 @@ local function get_build_args(build_name)
 end
 local MESSAGE_LIMIT = 32
 local PLAY_SOUND = false
+local COPEN_ON_ERROR = true
 local function build_runner(build_name)
     if asyncWorker ~= nil then
         popup("Build job is already running", "error", "Build")
@@ -627,6 +628,7 @@ local function build_runner(build_name)
                             handle.message = "Failed"
                             handle:finish()
                             status = "Failed"
+                            vim.cmd("copen")
                         end
                     end
                     vim.fn.setqflist(
@@ -853,12 +855,20 @@ function ____exports.add_build_template()
     f:close()
     popup("Template justfile created", "info", "Build")
 end
-function ____exports.setup(opts)
-    if opts.play_sound ~= nil then
-        if opts.play_sound == true then
-            PLAY_SOUND = true
+local function getBoolOption(opts, key, p_default)
+    if opts[key] ~= nil then
+        if opts[key] == true then
+            return true
+        end
+        if opts[key] == false then
+            return true
         end
     end
+    return p_default
+end
+function ____exports.setup(opts)
+    PLAY_SOUND = getBoolOption(opts, "play_sound", false)
+    COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true)
     vim.api.nvim_create_user_command("JustDefault", ____exports.run_task_default, {desc = "Run default task with just"})
     vim.api.nvim_create_user_command("JustBuild", ____exports.run_task_build, {desc = "Run build task with just"})
     vim.api.nvim_create_user_command("JustRun", ____exports.run_task_run, {desc = "Run run task with just"})
