@@ -2,7 +2,7 @@
 [Just](https://github.com/casey/just) task runner for neovim
 
 ## Screenshots
-Example just file (defailt JustCreateTemplate with added build task)
+Example just file (default JustCreateTemplate with added build task)
 
 ![example](readme/just-file.png)
 
@@ -35,10 +35,16 @@ Using [lazy](https://github.com/folke/lazy.nvim)
 
 ## Configuration
 Default config is:
-```
+```lua
 require("just").setup({
+    fidget_message_limit = 32, -- limit for length of fidget progress message 
     play_sound = false, -- plays sound when task is finished or failed
     open_qf_on_error = true, -- opens quickfix when task fails
+    telescope_borders = { -- borders for telescope window
+        prompt = { "─", "│", " ", "│", "┌", "┐", "│", "│" }, 
+        results = { "─", "│", "─", "│", "├", "┤", "┘", "└" },
+        preview = { "─", "│", "─", "│", "┌", "┐", "┘", "└" }
+    }
 })
 ```
 

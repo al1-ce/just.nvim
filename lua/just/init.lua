@@ -295,6 +295,34 @@ local function __TS__ObjectEntries(obj)
 end
 -- End of Lua Library inline imports
 local ____exports = {}
+local config = {message_limit = 32, play_sound = false, copen_on_error = true, telescope_borders = {prompt = {
+    "─",
+    "│",
+    " ",
+    "│",
+    "┌",
+    "┐",
+    "│",
+    "│"
+}, results = {
+    "─",
+    "│",
+    "─",
+    "│",
+    "├",
+    "┤",
+    "┘",
+    "└"
+}, preview = {
+    "─",
+    "│",
+    "─",
+    "│",
+    "┌",
+    "┐",
+    "┘",
+    "└"
+}}}
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
@@ -535,9 +563,6 @@ local function get_build_args(build_name)
     end
     return argsout
 end
-local MESSAGE_LIMIT = 32
-local PLAY_SOUND = false
-local COPEN_ON_ERROR = true
 local function build_runner(build_name)
     if asyncWorker ~= nil then
         popup("Build job is already running", "error", "Build")
@@ -580,8 +605,8 @@ local function build_runner(build_name)
             data = __TS__StringReplaceAll(data, "\0", "")
             vim.cmd(("caddexpr '" .. data) .. "'")
             vim.cmd("cbottom")
-            if #data > MESSAGE_LIMIT then
-                data = __TS__StringSlice(data, 0, MESSAGE_LIMIT - 1) .. "..."
+            if #data > config.message_limit then
+                data = __TS__StringSlice(data, 0, config.message_limit - 1) .. "..."
             end
             handle.message = data
         end)
@@ -606,8 +631,8 @@ local function build_runner(build_name)
                 data = __TS__StringReplaceAll(data, "\0", "")
                 vim.cmd(("caddexpr '" .. data) .. "'")
                 vim.cmd("cbottom")
-                if #data > MESSAGE_LIMIT then
-                    data = __TS__StringSlice(data, 0, MESSAGE_LIMIT - 1) .. "..."
+                if #data > config.message_limit then
+                    data = __TS__StringSlice(data, 0, config.message_limit - 1) .. "..."
                 end
                 handle.message = data
             end)
@@ -638,7 +663,7 @@ local function build_runner(build_name)
                             handle.message = "Failed"
                             handle:finish()
                             status = "Failed"
-                            if COPEN_ON_ERROR then
+                            if config.copen_on_error then
                                 vim.cmd("copen")
                             end
                         end
@@ -651,7 +676,7 @@ local function build_runner(build_name)
                         "a"
                     )
                     vim.cmd("cbottom")
-                    if PLAY_SOUND then
+                    if config.play_sound then
                         if ret == 0 then
                             async:new({
                                 command = "aplay",
@@ -694,16 +719,7 @@ function ____exports.build_select(opts)
         {
             prompt_title = "Build tasks",
             border = {},
-            borderchars = {
-                " ",
-                " ",
-                " ",
-                " ",
-                "┌",
-                "┐",
-                "┘",
-                "└"
-            },
+            borderchars = config.telescope_borders.preview,
             finder = finders.new_table({
                 results = tasks,
                 entry_maker = function(entry)
@@ -724,41 +740,13 @@ function ____exports.build_select(opts)
     )
     picker:find()
 end
-local telescopeConfig = {borderchars = {prompt = {
-    " ",
-    " ",
-    " ",
-    " ",
-    "┌",
-    "┐",
-    " ",
-    " "
-}, results = {
-    " ",
-    " ",
-    " ",
-    " ",
-    "├",
-    "┤",
-    "┘",
-    "└"
-}, preview = {
-    " ",
-    " ",
-    " ",
-    " ",
-    "┌",
-    "┐",
-    "┘",
-    "└"
-}}}
 function ____exports.run_task_select()
     local tasks = get_build_names()
     if #tasks == 0 then
         popup("There are no tasks defined in justfile", "warn", "Build")
         return
     end
-    ____exports.build_select(themes.get_dropdown(telescopeConfig))
+    ____exports.build_select(themes.get_dropdown({borderchars = config.telescope_borders}))
 end
 function ____exports.run_task_default()
     local tasks = get_build_names()
@@ -887,10 +875,22 @@ local function getBoolOption(opts, key, p_default)
     end
     return p_default
 end
+local function getSubTableOption(opts, key1, key2, p_default)
+    if opts[key1] ~= nil then
+        local o = opts[key1]
+        if o[key2] ~= nil then
+            return o[key2]
+        end
+    end
+    return p_default
+end
 function ____exports.setup(opts)
     opts = tableToDict(opts)
-    PLAY_SOUND = getBoolOption(opts, "play_sound", false)
-    COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true)
+    config.play_sound = getBoolOption(opts, "play_sound", config.play_sound)
+    config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error)
+    config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
+    config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results)
+    config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview)
     vim.api.nvim_create_user_command("JustDefault", ____exports.run_task_default, {desc = "Run default task with just"})
     vim.api.nvim_create_user_command("JustBuild", ____exports.run_task_build, {desc = "Run build task with just"})
     vim.api.nvim_create_user_command("JustRun", ____exports.run_task_run, {desc = "Run run task with just"})

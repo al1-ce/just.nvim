@@ -146,6 +146,17 @@ declare namespace debug {
     }
 }
 
+let config = {
+    message_limit: 32, // 15 is around cutoff of first word
+    play_sound: false,
+    copen_on_error: true,
+    telescope_borders: {
+        prompt: [ "─", "│", " ", "│", "┌", "┐", "│", "│" ],
+        results: [ "─", "│", "─", "│", "├", "┤", "┘", "└" ],
+        preview: [ "─", "│", "─", "│", "┌", "┐", "┘", "└" ]
+    }
+}
+
 //------------------------------------------------------------------//
 //                             IMPORTS                              //
 //------------------------------------------------------------------//
@@ -328,10 +339,6 @@ function get_build_args(build_name: string): string[] {
     return argsout;
 }
 
-const MESSAGE_LIMIT = 32; // 15 is around cutoff of first word
-let PLAY_SOUND = false;
-let COPEN_ON_ERROR = true;
-
 // doesnt include aliases
 function build_runner(build_name: string): void {
     if (asyncWorker != null) {
@@ -408,7 +415,7 @@ function build_runner(build_name: string): void {
 
             vim.cmd(`caddexpr '${data}'`);
             vim.cmd("cbottom");
-            if (data.length > MESSAGE_LIMIT) data = data.slice(0, MESSAGE_LIMIT - 1) + "...";
+            if (data.length > config.message_limit) data = data.slice(0, config.message_limit - 1) + "...";
             handle.message = data;
         });
     }
@@ -429,7 +436,7 @@ function build_runner(build_name: string): void {
             // popup(data);
             vim.cmd(`caddexpr '${data}'`);
             vim.cmd("cbottom");
-            if (data.length > MESSAGE_LIMIT) data = data.slice(0, MESSAGE_LIMIT - 1) + "...";
+            if (data.length > config.message_limit) data = data.slice(0, config.message_limit - 1) + "...";
             handle.message = data;
         // });
         }));
@@ -460,7 +467,7 @@ function build_runner(build_name: string): void {
                         handle.message = "Failed";
                         handle.finish();
                         status = "Failed";
-                        if (COPEN_ON_ERROR) vim.cmd("copen");
+                        if (config.copen_on_error) vim.cmd("copen");
                     }
                 }
                 vim.fn.setqflist([
@@ -469,7 +476,7 @@ function build_runner(build_name: string): void {
                 ], "a");
 
                 vim.cmd("cbottom");
-                if (PLAY_SOUND) {
+                if (config.play_sound) {
                     if (ret == 0) {
                         // @ts-ignore
                         async.new({
@@ -505,8 +512,7 @@ export function build_select(opts: any): void {
     let picker = pickers.new(opts, {
         prompt_title: "Build tasks",
         border: {},
-        // borderchars: [ "─", "│", "─", "│", "┌", "┐", "┘", "└" ],
-        borderchars: [ " ", " ", " ", " ", "┌", "┐", "┘", "└" ],
+        borderchars: config.telescope_borders.preview,
         finder: finders.new_table({
             results: tasks,
             entry_maker: (entry: any[]) => {
@@ -531,15 +537,6 @@ export function build_select(opts: any): void {
     picker.find();
 }
 
-let telescopeConfig = { borderchars: {
-     prompt: [ " ", " ", " ", " ", "┌", "┐", " ", " " ],
-    results: [ " ", " ", " ", " ", "├", "┤", "┘", "└" ],
-    preview: [ " ", " ", " ", " ", "┌", "┐", "┘", "└" ]
-    //  prompt: [ "─", "│", " ", "│", "┌", "┐", "│", "│" ],
-    // results: [ "─", "│", "─", "│", "├", "┤", "┘", "└" ],
-    // preview: [ "─", "│", "─", "│", "┌", "┐", "┘", "└" ]
-}}
-
 export function run_task_select(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
@@ -547,7 +544,7 @@ export function run_task_select(): void {
         return;
     }
 
-    build_select(themes.get_dropdown(telescopeConfig));
+    build_select(themes.get_dropdown({borderchars: config.telescope_borders}));
 }
 
 export function run_task_default(): void {
@@ -669,12 +666,31 @@ function getBoolOption(opts: any, key: string, p_default: boolean): boolean {
     return p_default;
 }
 
+function getAnyOption(opts: any, key: string, p_default: any): any {
+    if (key in opts) {
+        return opts[key];
+    }
+    return p_default;
+}
+
+function getSubTableOption(opts: any, key1: string, key2: string, p_default: any): any {
+    if (key1 in opts) {
+        let o = opts[key1];
+        if (key2 in o) {
+            return o[key2];
+        }
+    }
+    return p_default;
+}
+
 export function setup(opts: any): void {
-    // TODO: telescope config
     opts = tableToDict(opts);
-    // if ("play_sound" in opts) { if (opts.play_sound != true) PLAY_SOUND = false; }
-    PLAY_SOUND = getBoolOption(opts, "play_sound", false);
-    COPEN_ON_ERROR = getBoolOption(opts, "open_qf_on_error", true);
+    config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit);
+    config.play_sound = getBoolOption(opts, "play_sound", config.play_sound);
+    config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error);
+    config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt);
+    config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results);
+    config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview);
     vim.api.nvim_create_user_command("JustDefault", run_task_default, { desc: "Run default task with just" })
     vim.api.nvim_create_user_command("JustBuild", run_task_build, { desc: "Run build task with just" })
     vim.api.nvim_create_user_command("JustRun", run_task_run, { desc: "Run run task with just" })
