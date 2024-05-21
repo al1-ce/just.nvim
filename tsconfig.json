@@ -10,6 +10,10 @@
         "noImplicitOverride": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
+        "baseUrl": ".",
+        "paths": {
+            "@tstldefs/*": ["tstldefs.nvim/*"]
+        },
         "plugins": [
             { "name": "typescript-tstl-plugin" }
         ]
@@ -20,7 +24,7 @@
         "noImplicitSelf": true,
         "noImplicitGlobalVariables": true,
         "luaLibImport": "inline",
-        "luaBundleEntry": "lua/just/init.ts",
+        "luaBundleEntry": "src/init.ts",
         "luaBundle": "lua/just/init.lua",
         "noResolvePaths": [
             "telescope",

@@ -19,7 +19,19 @@ local function require(file, ...)
     end
 end
 ____modules = {
-["init"] = function(...) 
+["tstldefs.nvim.extensions"] = function(...) 
+ end,
+["tstldefs.nvim.fidget"] = function(...) 
+ end,
+["tstldefs.nvim.lua"] = function(...) 
+ end,
+["tstldefs.nvim.plenary"] = function(...) 
+ end,
+["tstldefs.nvim.telescope"] = function(...) 
+ end,
+["tstldefs.nvim.vim"] = function(...) 
+ end,
+["src.init"] = function(...) 
 -- Lua Library inline imports
 local __TS__StringSplit
 do
@@ -295,6 +307,12 @@ local function __TS__ObjectEntries(obj)
 end
 -- End of Lua Library inline imports
 local ____exports = {}
+require("tstldefs.nvim.extensions")
+require("tstldefs.nvim.fidget")
+require("tstldefs.nvim.lua")
+require("tstldefs.nvim.plenary")
+require("tstldefs.nvim.telescope")
+require("tstldefs.nvim.vim")
 local config = {message_limit = 32, play_sound = false, copen_on_error = true, telescope_borders = {prompt = {
     "─",
     "│",
@@ -913,7 +931,7 @@ function ____exports.setup(opts)
     vim.api.nvim_create_user_command("JustSelect", ____exports.run_task_select, {desc = "Open task picker"})
     vim.api.nvim_create_user_command("JustStop", ____exports.stop_current_task, {desc = "Stops current task"})
     vim.api.nvim_create_user_command("JustCreateTemplate", ____exports.add_build_template, {desc = "Creates template for just"})
-    if config.play_sound and vim.fn.executable("aplays") ~= 1 then
+    if config.play_sound and vim.fn.executable("aplay") ~= 1 then
         config.play_sound = false
         ____error("Failed to find 'aplay' binary on system. Disabling just.nvim play_sound")
     end
@@ -921,4 +939,4 @@ end
 return ____exports
  end,
 }
-return require("init", ...)
+return require("src.init", ...)
