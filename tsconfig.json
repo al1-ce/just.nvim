@@ -2,7 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
     "compilerOptions": {
         "target": "esnext",
-        "lib": ["esnext"],
+        "lib": ["esnext", "esnext.string"],
         "moduleResolution": "node",
         "types": [],
         "strict": true,
