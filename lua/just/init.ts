@@ -9,10 +9,22 @@
 //                            INTERFACES                            //
 //------------------------------------------------------------------//
 
+
+/**
+ * Represents multiple return values as a tuple.
+ * For more information see: https://typescripttolua.github.io/docs/advanced/language-extensions
+ *
+ * @param T A tuple type with each element type representing a return value's type.
+ */
+declare type LuaMultiReturn<T extends any[]> = T & {
+    readonly __tstlMultiReturn: any;
+};
+
 declare function require(modname: string): any;
 declare function print(val: any): void;
 declare function tostring(val: number): string;
 declare function tonumber(val: string): number;
+declare function pcall(func: any, args: any): LuaMultiReturn<[any, any]>;
 
 declare namespace string {
     function format(this: void, fmt: string, val: any): string;
@@ -31,6 +43,7 @@ declare namespace vim {
         function shellescape(this: void, str: string): any;
         function fnameescape(this: void, str: string): any;
         function escape(this: void, str: string, chars: string): any;
+        function executable(this: void, name: string): any;
         // function eval(this: void, expr: string): any;
     }
     function inspect(this: void, val: any): any;
@@ -51,6 +64,7 @@ declare namespace vim {
         function nvim_create_autocmd(this: void, event: any, opts: any): any;
         function nvim_create_user_command(this: void, name: string, command: any, opts: any): any;
         function nvim_del_user_command(this: void, name: string): any;
+        function nvim_err_writeln(this: void, msg: string): any;
     }
 }
 
@@ -683,14 +697,25 @@ function getSubTableOption(opts: any, key1: string, key2: string, p_default: any
     return p_default;
 }
 
+function error(msg: string): void {
+    let [ok, ignore] = pcall(require, "notify");
+    if (!ok) {
+        vim.api.nvim_err_writeln(msg);
+    } else {
+        require("notify")(msg, "error");
+    }
+}
+
 export function setup(opts: any): void {
     opts = tableToDict(opts);
+
     config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit);
     config.play_sound = getBoolOption(opts, "play_sound", config.play_sound);
     config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error);
     config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt);
     config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results);
     config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview);
+
     vim.api.nvim_create_user_command("JustDefault", run_task_default, { desc: "Run default task with just" })
     vim.api.nvim_create_user_command("JustBuild", run_task_build, { desc: "Run build task with just" })
     vim.api.nvim_create_user_command("JustRun", run_task_run, { desc: "Run run task with just" })
@@ -698,5 +723,10 @@ export function setup(opts: any): void {
     vim.api.nvim_create_user_command("JustSelect", run_task_select, { desc: "Open task picker" })
     vim.api.nvim_create_user_command("JustStop", stop_current_task, { desc: "Stops current task" })
     vim.api.nvim_create_user_command("JustCreateTemplate", add_build_template, { desc: "Creates template for just" })
+
+    if (config.play_sound && vim.fn.executable("aplay") != 1) {
+        config.play_sound = false;
+        error("Failed to find 'aplay' binary on system. Disabling just.nvim play_sound");
+    }
 }
 

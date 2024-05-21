@@ -875,6 +875,12 @@ local function getBoolOption(opts, key, p_default)
     end
     return p_default
 end
+local function getAnyOption(opts, key, p_default)
+    if opts[key] ~= nil then
+        return opts[key]
+    end
+    return p_default
+end
 local function getSubTableOption(opts, key1, key2, p_default)
     if opts[key1] ~= nil then
         local o = opts[key1]
@@ -884,8 +890,17 @@ local function getSubTableOption(opts, key1, key2, p_default)
     end
     return p_default
 end
+local function ____error(msg)
+    local ok, ignore = pcall(require, "notify")
+    if not ok then
+        vim.api.nvim_err_writeln(msg)
+    else
+        require("notify")(msg, "error")
+    end
+end
 function ____exports.setup(opts)
     opts = tableToDict(opts)
+    config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit)
     config.play_sound = getBoolOption(opts, "play_sound", config.play_sound)
     config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error)
     config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
@@ -898,6 +913,10 @@ function ____exports.setup(opts)
     vim.api.nvim_create_user_command("JustSelect", ____exports.run_task_select, {desc = "Open task picker"})
     vim.api.nvim_create_user_command("JustStop", ____exports.stop_current_task, {desc = "Stops current task"})
     vim.api.nvim_create_user_command("JustCreateTemplate", ____exports.add_build_template, {desc = "Creates template for just"})
+    if config.play_sound and vim.fn.executable("aplays") ~= 1 then
+        config.play_sound = false
+        ____error("Failed to find 'aplay' binary on system. Disabling just.nvim play_sound")
+    end
 end
 return ____exports
  end,
