@@ -376,7 +376,7 @@ local function get_build_names(lang)
         local overrideList = vim.fn.system(("just -f " .. pjustfile) .. " --list")
         local oarr = __TS__StringSplit(overrideList, "\n")
         if __TS__StringStartsWith(oarr[1], "error") then
-            popup(overrideList, "error", "Build")
+            popup(overrideList, "error", "Just")
             return {}
         end
         table.remove(oarr, 1)
@@ -411,7 +411,7 @@ local function get_build_names(lang)
         end
         arr = __TS__ArrayConcat(arr, oarr)
     else
-        popup("Justfile not found in project directory", "error", "Build")
+        popup("Justfile not found in project directory", "error", "Just")
         return {}
     end
     local tbl = {}
@@ -533,7 +533,7 @@ local function get_build_args(build_name)
         justloc = "just -f " .. pjustfile
     end
     if justloc == "" then
-        popup("Justfile not found in project directory", "error", "Build")
+        popup("Justfile not found in project directory", "error", "Just")
         return {}
     end
     local outshow = vim.fn.system((justloc .. " -s ") .. build_name)
@@ -583,7 +583,7 @@ local function get_build_args(build_name)
 end
 local function build_runner(build_name)
     if asyncWorker ~= nil then
-        popup("Build job is already running", "error", "Build")
+        popup("Just task is already running", "error", "Just")
         return
     end
     local args = get_build_args(build_name)
@@ -593,13 +593,13 @@ local function build_runner(build_name)
         justloc = "just -f " .. pjustfile
     end
     if justloc == "" then
-        popup("Justfile not found in project directory", "error", "Build")
+        popup("Justfile not found in project directory", "error", "Just")
         return
     end
-    local handle = progress.handle.create({title = "", message = "Starting build job...", lsp_client = {name = "Build job"}, percentage = 0})
+    local handle = progress.handle.create({title = "", message = ("Starting task " .. build_name) .. "...", lsp_client = {name = "Just"}, percentage = 0})
     local command = (((justloc .. " -d . ") .. build_name) .. " ") .. table.concat(args, " ")
     vim.schedule(function()
-        vim.fn.setqflist({{text = "Starting build job: " .. command}, {text = ""}}, "r")
+        vim.fn.setqflist({{text = "Starting just task: " .. command}, {text = ""}}, "r")
     end)
     local stime = os.clock()
     local function sleep(t)
@@ -735,7 +735,7 @@ function ____exports.build_select(opts)
     local picker = pickers.new(
         opts,
         {
-            prompt_title = "Build tasks",
+            prompt_title = "Just tasks",
             border = {},
             borderchars = config.telescope_borders.preview,
             finder = finders.new_table({
@@ -761,7 +761,7 @@ end
 function ____exports.run_task_select()
     local tasks = get_build_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Build")
+        popup("There are no tasks defined in justfile", "warn", "Just")
         return
     end
     ____exports.build_select(themes.get_dropdown({borderchars = config.telescope_borders}))
@@ -769,7 +769,7 @@ end
 function ____exports.run_task_default()
     local tasks = get_build_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Build")
+        popup("There are no tasks defined in justfile", "warn", "Just")
         return
     end
     do
@@ -785,13 +785,13 @@ function ____exports.run_task_default()
             i = i + 1
         end
     end
-    popup("Could not find default task. \nPlease select task from list.", "warn", "Build")
+    popup("Could not find default task. \nPlease select task from list.", "warn", "Just")
     ____exports.run_task_select()
 end
 function ____exports.run_task_build()
     local tasks = get_build_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Build")
+        popup("There are no tasks defined in justfile", "warn", "Just")
         return
     end
     do
@@ -807,13 +807,13 @@ function ____exports.run_task_build()
             i = i + 1
         end
     end
-    popup("Could not find build task. \nPlease select task from list.", "warn", "Build")
+    popup("Could not find just task. \nPlease select task from list.", "warn", "Just")
     ____exports.run_task_select()
 end
 function ____exports.run_task_run()
     local tasks = get_build_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Build")
+        popup("There are no tasks defined in justfile", "warn", "Just")
         return
     end
     do
@@ -829,13 +829,13 @@ function ____exports.run_task_run()
             i = i + 1
         end
     end
-    popup("Could not find run task. \nPlease select task from list.", "warn", "Build")
+    popup("Could not find run task. \nPlease select task from list.", "warn", "Just")
     ____exports.run_task_select()
 end
 function ____exports.run_task_test()
     local tasks = get_build_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Build")
+        popup("There are no tasks defined in justfile", "warn", "Just")
         return
     end
     do
@@ -851,7 +851,7 @@ function ____exports.run_task_test()
             i = i + 1
         end
     end
-    popup("Could not find test task. \nPlease select task from list.", "warn", "Build")
+    popup("Could not find test task. \nPlease select task from list.", "warn", "Just")
     ____exports.run_task_select()
 end
 function ____exports.stop_current_task()
@@ -871,7 +871,7 @@ function ____exports.add_build_template()
     local f = io.open(pjustfile, "w")
     f:write((((((((((((("#!/usr/bin/env -S just --justfile" .. "\n") .. "# just reference  : https://just.systems/man/en/") .. "\n") .. "") .. "\n") .. "@default:") .. "\n") .. "    just --list") .. "\n") .. "") .. "\n") .. "") .. "\n")
     f:close()
-    popup("Template justfile created", "info", "Build")
+    popup("Template justfile created", "info", "Just")
 end
 local function tableToDict(tbl)
     local out = {}

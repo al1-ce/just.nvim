@@ -62,7 +62,7 @@ function get_build_names(lang: string = ""): string[][] {
         let overrideList: string = vim.fn.system(`just -f ${pjustfile} --list`);
         let oarr: string[] = overrideList.split("\n");
         if (oarr[0].startsWith("error")) {
-            popup(overrideList, "error", "Build");
+            popup(overrideList, "error", "Just");
             return [];
         }
         oarr.shift();
@@ -82,7 +82,7 @@ function get_build_names(lang: string = ""): string[][] {
         }
         arr = arr.concat(oarr);
     } else {
-        popup("Justfile not found in project directory", "error", "Build");
+        popup("Justfile not found in project directory", "error", "Just");
         return [];
     }
     //////////////////// add vim.fn.cwd()
@@ -163,7 +163,7 @@ function get_build_args(build_name: string): string[] {
     if (vim.fn.filereadable(pjustfile) == 1) { justloc = `just -f ${pjustfile}`; }
 
     if (justloc == ""){
-        popup("Justfile not found in project directory", "error", "Build");
+        popup("Justfile not found in project directory", "error", "Just");
         return [];
     }
 
@@ -207,7 +207,7 @@ function get_build_args(build_name: string): string[] {
 // doesnt include aliases
 function build_runner(build_name: string): void {
     if (asyncWorker != null) {
-        popup("Build job is already running", "error", "Build");
+        popup("Just task is already running", "error", "Just");
         return;
     }
 
@@ -217,14 +217,14 @@ function build_runner(build_name: string): void {
     if (vim.fn.filereadable(pjustfile) == 1) { justloc = `just -f ${pjustfile}`; }
 
     if (justloc == ""){
-        popup("Justfile not found in project directory", "error", "Build");
+        popup("Justfile not found in project directory", "error", "Just");
         return;
     }
 
     let handle = progress.handle.create({
         title: "",
-        message: "Starting build job...",
-        lsp_client: { name: "Build job" },
+        message: "Starting task " + build_name + "...",
+        lsp_client: { name: "Just" },
         percentage: 0
     })
 
@@ -244,7 +244,7 @@ function build_runner(build_name: string): void {
     // and I can make it even prettier
     vim.schedule(function() {
         // vim.cmd("copen");
-        vim.fn.setqflist([{text: "Starting build job: " + command}, {text: ""}], "r");
+        vim.fn.setqflist([{text: "Starting just task: " + command}, {text: ""}], "r");
         // vim.cmd("wincmd p");
     });
 
@@ -375,7 +375,7 @@ export function build_select(opts: any): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) return;
     let picker = pickers.new(opts, {
-        prompt_title: "Build tasks",
+        prompt_title: "Just tasks",
         border: {},
         borderchars: config.telescope_borders.preview,
         finder: finders.new_table({
@@ -405,7 +405,7 @@ export function build_select(opts: any): void {
 export function run_task_select(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
-        popup(`There are no tasks defined in justfile`, "warn", "Build");
+        popup(`There are no tasks defined in justfile`, "warn", "Just");
         return;
     }
 
@@ -415,7 +415,7 @@ export function run_task_select(): void {
 export function run_task_default(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
-        popup(`There are no tasks defined in justfile`, "warn", "Build");
+        popup(`There are no tasks defined in justfile`, "warn", "Just");
         return;
     }
     for (let i = 0; i < tasks.length; ++i) {
@@ -427,14 +427,14 @@ export function run_task_default(): void {
             }
         }
     }
-    popup(`Could not find default task. \nPlease select task from list.`, "warn", "Build");
+    popup(`Could not find default task. \nPlease select task from list.`, "warn", "Just");
     run_task_select();
 }
 
 export function run_task_build(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
-        popup(`There are no tasks defined in justfile`, "warn", "Build");
+        popup(`There are no tasks defined in justfile`, "warn", "Just");
         return;
     }
     for (let i = 0; i < tasks.length; ++i) {
@@ -446,14 +446,14 @@ export function run_task_build(): void {
             }
         }
     }
-    popup(`Could not find build task. \nPlease select task from list.`, "warn", "Build");
+    popup(`Could not find just task. \nPlease select task from list.`, "warn", "Just");
     run_task_select();
 }
 
 export function run_task_run(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
-        popup(`There are no tasks defined in justfile`, "warn", "Build");
+        popup(`There are no tasks defined in justfile`, "warn", "Just");
         return;
     }
     for (let i = 0; i < tasks.length; ++i) {
@@ -465,14 +465,14 @@ export function run_task_run(): void {
             }
         }
     }
-    popup(`Could not find run task. \nPlease select task from list.`, "warn", "Build");
+    popup(`Could not find run task. \nPlease select task from list.`, "warn", "Just");
     run_task_select();
 }
 
 export function run_task_test(): void {
     let tasks: string[][] = get_build_names();
     if (tasks.length == 0) {
-        popup(`There are no tasks defined in justfile`, "warn", "Build");
+        popup(`There are no tasks defined in justfile`, "warn", "Just");
         return;
     }
     for (let i = 0; i < tasks.length; ++i) {
@@ -484,7 +484,7 @@ export function run_task_test(): void {
             }
         }
     }
-    popup(`Could not find test task. \nPlease select task from list.`, "warn", "Build");
+    popup(`Could not find test task. \nPlease select task from list.`, "warn", "Just");
     run_task_select();
 }
 
@@ -512,7 +512,7 @@ export function add_build_template(): void {
     );
     f.close();
 
-    popup("Template justfile created", "info", "Build");
+    popup("Template justfile created", "info", "Just");
 }
 
 function tableToDict(tbl: any) {
