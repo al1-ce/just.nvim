@@ -58,12 +58,13 @@ Commands:
 - `JustBuild` - Builds current file/project using `build` task.
 - `JustRun` - Builds current file/project using `run` task.
 - `JustTest` - Builds current file/project using `test` task.
-- `JustSelect` - Gives you selection of all tasks in `justdfile`.
+- `JustSelect` - Gives you selection of all tasks in `justfile`.
 - `JustStop` - Stops currently executed task
-- `JustCreateTemplate` - Creates template `justdfile` with included "cheatsheet".
+- `JustCreateTemplate` - Creates template `justfile` with included "cheatsheet".
+- `JustMakeTemplate` - Creates make-like template `justfile` to allow compiling only changed files.
 
 Only one task can be executed at same time.
 
-## [More info](https://github.com/al1-ce/just.nvim/blob/master/primer.md)
+## [More info](htts://github.com/al1-ce/just.nvim/blob/master/primer.md)
 Click the link
 

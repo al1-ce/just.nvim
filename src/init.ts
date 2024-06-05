@@ -515,6 +515,42 @@ export function add_build_template(): void {
     popup("Template justfile created", "info", "Just");
 }
 
+export function add_make_build_template(): void {
+    let pjustfile: string = `${vim.fn.getcwd()}/justfile`;
+    if (vim.fn.filereadable(pjustfile) == 1) {
+        let opt = vim.fn.confirm("Justfile already exists in this project, create anyway?", "&Yes\n&No", 2);
+        if (opt != 1) return;
+    }
+
+    let f = io.open(pjustfile, "w");
+    f.write(
+        `#!/usr/bin/env -S just --justfile` + '\n' +
+        `# just reference  : https://just.systems/man/en/` + '\n' +
+        `` + '\n' +
+        `@default:` + '\n' +
+        `    just --list` + '\n' +
+        `` + '\n' +
+        `build file: (track file) && (hash file)` + '\n' +
+        `    # compile here` + '\n' +
+        `` + '\n' +
+        `# Don't forget to add '.hashes' to gitignore` + '\n' +
+        `[private]` + '\n' +
+        `[no-exit-message]` + '\n' +
+        `track file:` + '\n' +
+        `    [ ! -f .hashes ] && touch .hashes` + '\n' +
+        `    [[ "$(md5sum {{file}} | head -c 32)" == "$(grep " {{file}}$" .hashes | head -c 32)" ]] && exit 1 || exit 0` + '\n' +
+        `` + '\n' +
+        `[private]` + '\n' +
+        `hash file: (track file)` + '\n' +
+        `    #!/usr/bin/env bash` + '\n' +
+        `    echo "$(grep -v " {{file}}$" .hashes)" > .hashes && md5sum {{file}} >> .hashes` + '\n' +
+        `` + '\n'
+    );
+    f.close();
+
+    popup("Template make justfile created", "info", "Just");
+}
+
 function tableToDict(tbl: any) {
     let out: any = {};
     for (let [key, value] of Object.entries(tbl)) {
@@ -574,6 +610,7 @@ export function setup(opts: any): void {
     vim.api.nvim_create_user_command("JustSelect", run_task_select, { desc: "Open task picker" })
     vim.api.nvim_create_user_command("JustStop", stop_current_task, { desc: "Stops current task" })
     vim.api.nvim_create_user_command("JustCreateTemplate", add_build_template, { desc: "Creates template for just" })
+    vim.api.nvim_create_user_command("JustMakeTemplate", add_make_build_template, { desc: "Creates make-like template for just" })
 
     if (config.play_sound && vim.fn.executable("aplay") != 1) {
         config.play_sound = false;
