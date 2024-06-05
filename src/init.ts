@@ -531,12 +531,13 @@ export function add_make_build_template(): void {
         `    just --list` + '\n' +
         `` + '\n' +
         `build file: (track file) && (hash file)` + '\n' +
-        `    # compile here` + '\n' +
+        `    echo "Compiling file"` + '\n' +
         `` + '\n' +
         `# Don't forget to add '.hashes' to gitignore` + '\n' +
         `[private]` + '\n' +
         `[no-exit-message]` + '\n' +
         `track file:` + '\n' +
+        `    #!/usr/bin/env bash` + '\n' +
         `    [ ! -f .hashes ] && touch .hashes` + '\n' +
         `    [[ "$(md5sum {{file}} | head -c 32)" == "$(grep " {{file}}$" .hashes | head -c 32)" ]] && exit 1 || exit 0` + '\n' +
         `` + '\n' +
