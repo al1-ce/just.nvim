@@ -313,34 +313,40 @@ require("tstldefs.nvim.lua")
 require("tstldefs.nvim.plenary")
 require("tstldefs.nvim.telescope")
 require("tstldefs.nvim.vim")
-local config = {message_limit = 32, play_sound = false, copen_on_error = true, telescope_borders = {prompt = {
-    "─",
-    "│",
-    " ",
-    "│",
-    "┌",
-    "┐",
-    "│",
-    "│"
-}, results = {
-    "─",
-    "│",
-    "─",
-    "│",
-    "├",
-    "┤",
-    "┘",
-    "└"
-}, preview = {
-    "─",
-    "│",
-    "─",
-    "│",
-    "┌",
-    "┐",
-    "┘",
-    "└"
-}}}
+local config = {
+    message_limit = 32,
+    play_sound = false,
+    copen_on_error = true,
+    copen_on_run = true,
+    telescope_borders = {prompt = {
+        "─",
+        "│",
+        " ",
+        "│",
+        "┌",
+        "┐",
+        "│",
+        "│"
+    }, results = {
+        "─",
+        "│",
+        "─",
+        "│",
+        "├",
+        "┤",
+        "┘",
+        "└"
+    }, preview = {
+        "─",
+        "│",
+        "─",
+        "│",
+        "┌",
+        "┐",
+        "┘",
+        "└"
+    }}
+}
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
@@ -599,6 +605,9 @@ local function build_runner(build_name)
     local handle = progress.handle.create({title = "", message = ("Starting task " .. build_name) .. "...", lsp_client = {name = "Just"}, percentage = 0})
     local command = (((justloc .. " -d . ") .. build_name) .. " ") .. table.concat(args, " ")
     vim.schedule(function()
+        if config.copen_on_run and build_name == "run" then
+            vim.cmd("copen")
+        end
         vim.fn.setqflist({{text = "Starting just task: " .. command}, {text = ""}}, "r")
     end)
     local stime = os.clock()
@@ -934,6 +943,7 @@ function ____exports.setup(opts)
     config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit)
     config.play_sound = getBoolOption(opts, "play_sound", config.play_sound)
     config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error)
+    config.copen_on_run = getBoolOption(opts, "open_qf_on_run", config.copen_on_run)
     config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
     config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results)
     config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview)

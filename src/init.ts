@@ -15,6 +15,7 @@ let config = {
     message_limit: 32, // 15 is around cutoff of first word
     play_sound: false,
     copen_on_error: true,
+    copen_on_run: true,
     telescope_borders: {
         prompt: [ "─", "│", " ", "│", "┌", "┐", "│", "│" ],
         results: [ "─", "│", "─", "│", "├", "┤", "┘", "└" ],
@@ -243,9 +244,9 @@ function build_runner(build_name: string): void {
     // and AsyncRun was giving me some wierd errors at some places
     // and I can make it even prettier
     vim.schedule(function() {
-        // vim.cmd("copen");
+        if (config.copen_on_run && build_name == "run") vim.cmd("copen");
         vim.fn.setqflist([{text: "Starting just task: " + command}, {text: ""}], "r");
-        // vim.cmd("wincmd p");
+        // if (config.copen_on_run && build_name == "run") vim.cmd("wincmd p");
     });
 
     let stime = os.clock();
@@ -600,6 +601,7 @@ export function setup(opts: any): void {
     config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit);
     config.play_sound = getBoolOption(opts, "play_sound", config.play_sound);
     config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error);
+    config.copen_on_run = getBoolOption(opts, "open_qf_on_run", config.copen_on_run);
     config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt);
     config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results);
     config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview);
