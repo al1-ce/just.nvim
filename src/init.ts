@@ -246,7 +246,7 @@ function build_runner(build_name: string): void {
     vim.schedule(function() {
         if (config.copen_on_run && build_name == "run") vim.cmd("copen");
         vim.fn.setqflist([{text: "Starting just task: " + command}, {text: ""}], "r");
-        // if (config.copen_on_run && build_name == "run") vim.cmd("wincmd p");
+        if (config.copen_on_run && build_name == "run") vim.cmd("wincmd p");
     });
 
     let stime = os.clock();

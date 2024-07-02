@@ -609,6 +609,9 @@ local function build_runner(build_name)
             vim.cmd("copen")
         end
         vim.fn.setqflist({{text = "Starting just task: " .. command}, {text = ""}}, "r")
+        if config.copen_on_run and build_name == "run" then
+            vim.cmd("wincmd p")
+        end
     end)
     local stime = os.clock()
     local function sleep(t)
