@@ -318,6 +318,7 @@ local config = {
     play_sound = false,
     copen_on_error = true,
     copen_on_run = true,
+    copen_on_any = false,
     telescope_borders = {prompt = {
         "─",
         "│",
@@ -605,11 +606,12 @@ local function build_runner(build_name)
     local handle = progress.handle.create({title = "", message = ("Starting task " .. build_name) .. "...", lsp_client = {name = "Just"}, percentage = 0})
     local command = (((justloc .. " -d . ") .. build_name) .. " ") .. table.concat(args, " ")
     vim.schedule(function()
-        if config.copen_on_run and build_name == "run" then
+        local op_cond = config.copen_on_run and build_name == "run" or config.copen_on_any
+        if op_cond then
             vim.cmd("copen")
         end
         vim.fn.setqflist({{text = "Starting just task: " .. command}, {text = ""}}, "r")
-        if config.copen_on_run and build_name == "run" then
+        if op_cond then
             vim.cmd("wincmd p")
         end
     end)
@@ -947,6 +949,7 @@ function ____exports.setup(opts)
     config.play_sound = getBoolOption(opts, "play_sound", config.play_sound)
     config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error)
     config.copen_on_run = getBoolOption(opts, "open_qf_on_run", config.copen_on_run)
+    config.copen_on_any = getBoolOption(opts, "open_qf_on_any", config.copen_on_any)
     config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
     config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results)
     config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview)
