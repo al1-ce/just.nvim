@@ -30,7 +30,7 @@ const notify = require("notify");
 let async_worker = null;
 
 function popup(message, errlvl = "info", title = "Info") {
-    let ok = pcall(require, "notify");
+    let ok = pack2(pcall(require, "notify"))[1];
     if (!ok) {
         // TODO: add log option
         if (errlvl == "error") {
@@ -312,7 +312,7 @@ function task_runner(task_name) {
                         if (config.copen_on_error) {
                             new vim.cmd("copen");
                             new vim.cmd("wincmd p");
-                        }
+                            }
                     }
                 }
                 new vim.fn.setqflist([

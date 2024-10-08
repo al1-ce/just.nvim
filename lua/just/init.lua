@@ -30,7 +30,7 @@ local function popup(message, errlvl, title)
     if title == nil then
         title = "Info"
     end
-    local ok = pcall(require, "notify")
+    local ok = pack2(pcall(require, "notify"))[1]
     if not ok then
         if errlvl == "error" then
             vim.api.nvim_err_writeln(message)
