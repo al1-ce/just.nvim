@@ -1,352 +1,17 @@
+local _M = {}
 
-local ____modules = {}
-local ____moduleCache = {}
-local ____originalRequire = require
-local function require(file, ...)
-    if ____moduleCache[file] then
-        return ____moduleCache[file].value
-    end
-    if ____modules[file] then
-        local module = ____modules[file]
-        ____moduleCache[file] = { value = (select("#", ...) > 0) and module(...) or module(file) }
-        return ____moduleCache[file].value
-    else
-        if ____originalRequire then
-            return ____originalRequire(file)
-        else
-            error("module '" .. file .. "' not found")
-        end
-    end
-end
-____modules = {
-["tstldefs.nvim.extensions"] = function(...) 
- end,
-["tstldefs.nvim.fidget"] = function(...) 
- end,
-["tstldefs.nvim.lua"] = function(...) 
- end,
-["tstldefs.nvim.plenary"] = function(...) 
- end,
-["tstldefs.nvim.telescope"] = function(...) 
- end,
-["tstldefs.nvim.vim"] = function(...) 
- end,
-["src.init"] = function(...) 
--- Lua Library inline imports
-local __TS__StringSplit
-do
-    local sub = string.sub
-    local find = string.find
-    function __TS__StringSplit(source, separator, limit)
-        if limit == nil then
-            limit = 4294967295
-        end
-        if limit == 0 then
-            return {}
-        end
-        local result = {}
-        local resultIndex = 1
-        if separator == nil or separator == "" then
-            for i = 1, #source do
-                result[resultIndex] = sub(source, i, i)
-                resultIndex = resultIndex + 1
-            end
-        else
-            local currentPos = 1
-            while resultIndex <= limit do
-                local startPos, endPos = find(source, separator, currentPos, true)
-                if not startPos then
-                    break
-                end
-                result[resultIndex] = sub(source, currentPos, startPos - 1)
-                resultIndex = resultIndex + 1
-                currentPos = endPos + 1
-            end
-            if resultIndex <= limit then
-                result[resultIndex] = sub(source, currentPos)
-            end
-        end
-        return result
-    end
-end
-
-local function __TS__StringStartsWith(self, searchString, position)
-    if position == nil or position < 0 then
-        position = 0
-    end
-    return string.sub(self, position + 1, #searchString + position) == searchString
-end
-
-local function __TS__ArrayFilter(self, callbackfn, thisArg)
-    local result = {}
-    local len = 0
-    for i = 1, #self do
-        if callbackfn(thisArg, self[i], i - 1, self) then
-            len = len + 1
-            result[len] = self[i]
-        end
-    end
-    return result
-end
-
-local function __TS__CountVarargs(...)
-    return select("#", ...)
-end
-
-local function __TS__ArraySplice(self, ...)
-    local args = {...}
-    local len = #self
-    local actualArgumentCount = __TS__CountVarargs(...)
-    local start = args[1]
-    local deleteCount = args[2]
-    if start < 0 then
-        start = len + start
-        if start < 0 then
-            start = 0
-        end
-    elseif start > len then
-        start = len
-    end
-    local itemCount = actualArgumentCount - 2
-    if itemCount < 0 then
-        itemCount = 0
-    end
-    local actualDeleteCount
-    if actualArgumentCount == 0 then
-        actualDeleteCount = 0
-    elseif actualArgumentCount == 1 then
-        actualDeleteCount = len - start
-    else
-        actualDeleteCount = deleteCount or 0
-        if actualDeleteCount < 0 then
-            actualDeleteCount = 0
-        end
-        if actualDeleteCount > len - start then
-            actualDeleteCount = len - start
-        end
-    end
-    local out = {}
-    for k = 1, actualDeleteCount do
-        local from = start + k
-        if self[from] ~= nil then
-            out[k] = self[from]
-        end
-    end
-    if itemCount < actualDeleteCount then
-        for k = start + 1, len - actualDeleteCount do
-            local from = k + actualDeleteCount
-            local to = k + itemCount
-            if self[from] then
-                self[to] = self[from]
-            else
-                self[to] = nil
-            end
-        end
-        for k = len - actualDeleteCount + itemCount + 1, len do
-            self[k] = nil
-        end
-    elseif itemCount > actualDeleteCount then
-        for k = len - actualDeleteCount, start + 1, -1 do
-            local from = k + actualDeleteCount
-            local to = k + itemCount
-            if self[from] then
-                self[to] = self[from]
-            else
-                self[to] = nil
-            end
-        end
-    end
-    local j = start + 1
-    for i = 3, actualArgumentCount do
-        self[j] = args[i]
-        j = j + 1
-    end
-    for k = #self, len - actualDeleteCount + itemCount + 1, -1 do
-        self[k] = nil
-    end
-    return out
-end
-
-local function __TS__ArrayIsArray(value)
-    return type(value) == "table" and (value[1] ~= nil or next(value) == nil)
-end
-
-local function __TS__ArrayConcat(self, ...)
-    local items = {...}
-    local result = {}
-    local len = 0
-    for i = 1, #self do
-        len = len + 1
-        result[len] = self[i]
-    end
-    for i = 1, #items do
-        local item = items[i]
-        if __TS__ArrayIsArray(item) then
-            for j = 1, #item do
-                len = len + 1
-                result[len] = item[j]
-            end
-        else
-            len = len + 1
-            result[len] = item
-        end
-    end
-    return result
-end
-
-local function __TS__StringSubstring(self, start, ____end)
-    if ____end ~= ____end then
-        ____end = 0
-    end
-    if ____end ~= nil and start > ____end then
-        start, ____end = ____end, start
-    end
-    if start >= 0 then
-        start = start + 1
-    else
-        start = 1
-    end
-    if ____end ~= nil and ____end < 0 then
-        ____end = 0
-    end
-    return string.sub(self, start, ____end)
-end
-
-local function __TS__StringIncludes(self, searchString, position)
-    if not position then
-        position = 1
-    else
-        position = position + 1
-    end
-    local index = string.find(self, searchString, position, true)
-    return index ~= nil
-end
-
-local __TS__StringReplace
-do
-    local sub = string.sub
-    function __TS__StringReplace(source, searchValue, replaceValue)
-        local startPos, endPos = string.find(source, searchValue, nil, true)
-        if not startPos then
-            return source
-        end
-        local before = sub(source, 1, startPos - 1)
-        local replacement = type(replaceValue) == "string" and replaceValue or replaceValue(nil, searchValue, startPos - 1, source)
-        local after = sub(source, endPos + 1)
-        return (before .. replacement) .. after
-    end
-end
-
-local __TS__StringReplaceAll
-do
-    local sub = string.sub
-    local find = string.find
-    function __TS__StringReplaceAll(source, searchValue, replaceValue)
-        if type(replaceValue) == "string" then
-            local concat = table.concat(
-                __TS__StringSplit(source, searchValue),
-                replaceValue
-            )
-            if #searchValue == 0 then
-                return (replaceValue .. concat) .. replaceValue
-            end
-            return concat
-        end
-        local parts = {}
-        local partsIndex = 1
-        if #searchValue == 0 then
-            parts[1] = replaceValue(nil, "", 0, source)
-            partsIndex = 2
-            for i = 1, #source do
-                parts[partsIndex] = sub(source, i, i)
-                parts[partsIndex + 1] = replaceValue(nil, "", i, source)
-                partsIndex = partsIndex + 2
-            end
-        else
-            local currentPos = 1
-            while true do
-                local startPos, endPos = find(source, searchValue, currentPos, true)
-                if not startPos then
-                    break
-                end
-                parts[partsIndex] = sub(source, currentPos, startPos - 1)
-                parts[partsIndex + 1] = replaceValue(nil, searchValue, startPos - 1, source)
-                partsIndex = partsIndex + 2
-                currentPos = endPos + 1
-            end
-            parts[partsIndex] = sub(source, currentPos)
-        end
-        return table.concat(parts)
-    end
-end
-
-local function __TS__StringSlice(self, start, ____end)
-    if start == nil or start ~= start then
-        start = 0
-    end
-    if ____end ~= ____end then
-        ____end = 0
-    end
-    if start >= 0 then
-        start = start + 1
-    end
-    if ____end ~= nil and ____end < 0 then
-        ____end = ____end - 1
-    end
-    return string.sub(self, start, ____end)
-end
-
-local function __TS__ObjectEntries(obj)
-    local result = {}
-    local len = 0
-    for key in pairs(obj) do
-        len = len + 1
-        result[len] = {key, obj[key]}
-    end
-    return result
-end
--- End of Lua Library inline imports
-local ____exports = {}
-require("tstldefs.nvim.extensions")
-require("tstldefs.nvim.fidget")
-require("tstldefs.nvim.lua")
-require("tstldefs.nvim.plenary")
-require("tstldefs.nvim.telescope")
-require("tstldefs.nvim.vim")
+require("jsfunc")
 local config = {
     message_limit = 32,
     play_sound = false,
     copen_on_error = true,
     copen_on_run = true,
     copen_on_any = false,
-    telescope_borders = {prompt = {
-        "─",
-        "│",
-        " ",
-        "│",
-        "┌",
-        "┐",
-        "│",
-        "│"
-    }, results = {
-        "─",
-        "│",
-        "─",
-        "│",
-        "├",
-        "┤",
-        "┘",
-        "└"
-    }, preview = {
-        "─",
-        "│",
-        "─",
-        "│",
-        "┌",
-        "┐",
-        "┘",
-        "└"
-    }}
+    telescope_borders = {
+        prompt = {"─", "│", " ", "│", "┌", "┐", "│", "│"},
+        results = {"─", "│", "─", "│", "├", "┤", "┘", "└"},
+        preview = {"─", "│", "─", "│", "┌", "┐", "┘", "└"}
+    }
 }
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
@@ -357,7 +22,7 @@ local themes = require("telescope.themes")
 local async = require("plenary.job")
 local progress = require("fidget.progress")
 local notify = require("notify")
-local asyncWorker
+local async_worker = nil
 local function popup(message, errlvl, title)
     if errlvl == nil then
         errlvl = "info"
@@ -365,551 +30,575 @@ local function popup(message, errlvl, title)
     if title == nil then
         title = "Info"
     end
-    notify(message, errlvl, {title = title})
+    local ok = pcall(require, "notify")
+    if not ok then
+        if errlvl == "error" then
+            vim.api.nvim_err_writeln(message)
+        else
+            vim.api.nvim_echo({{message, "Normal"}}, false, {})
+        end
+    else
+        notify(message, errlvl, {title = title})
+    end
 end
-local function getConfigDir()
+local function info(message)
+    popup(message, "info", "Just")
+end
+local function error(message)
+    popup(message, "error", "Just")
+end
+local function warning(message)
+    popup(message, "warning", "Just")
+end
+local function inspect(val)
+    print(vim.inspect(val))
+end
+local function get_config_dir()
     return vim.fn.fnamemodify(
-        debug.getinfo(1).source:sub(2),
+        (function()
+            local __tmp = debug.getinfo(1).source
+            return __tmp:sub(2)
+        end)(),
         ":p:h"
     )
 end
-local function get_build_names(lang)
+local function get_task_names(lang)
     if lang == nil then
         lang = ""
     end
     local arr = {}
-    local pjustfile = vim.fn.getcwd() .. "/justfile"
-    if vim.fn.filereadable(pjustfile) == 1 then
-        local overrideList = vim.fn.system(("just -f " .. pjustfile) .. " --list")
-        local oarr = __TS__StringSplit(overrideList, "\n")
-        if __TS__StringStartsWith(oarr[1], "error") then
-            popup(overrideList, "error", "Just")
+    local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
+    if vim.fn.filereadable(justfile) == 1 then
+        local taskList = vim.fn.system(string.format([=[just -f %s --list]=], justfile))
+        local taskArray = taskList:split("\n")
+        if (function()
+                local __tmp = taskArray[1]
+                return __tmp:starts_with("error")
+            end)() then
+            error(taskList)
             return {}
         end
-        table.remove(oarr, 1)
-        table.remove(oarr)
-        local rem = false
-        do
-            local i = 0
-            while i < #arr do
-                do
-                    local j = 0
-                    while j < #oarr do
-                        local fnor = __TS__ArrayFilter(
-                            __TS__StringSplit(arr[i + 1], " "),
-                            function(____, e) return e ~= "" end
-                        )[1]
-                        local fnov = __TS__ArrayFilter(
-                            __TS__StringSplit(oarr[j + 1], " "),
-                            function(____, e) return e ~= "" end
-                        )[1]
-                        if fnor == fnov then
-                            rem = true
-                        end
-                        j = j + 1
-                    end
-                end
-                if rem then
-                    __TS__ArraySplice(arr, i, 1)
-                end
-                rem = false
-                i = i + 1
-            end
-        end
-        arr = __TS__ArrayConcat(arr, oarr)
+        table.shift(taskArray)
+        table.pop(taskArray)
+        arr = taskArray
     else
-        popup("Justfile not found in project directory", "error", "Just")
+        error("Justfile not found in project directory")
         return {}
     end
     local tbl = {}
     do
         local i = 0
         while i < #arr do
-            local comment = __TS__StringSplit(arr[i + 1], "#")[2]
-            local options = __TS__StringSplit(
-                __TS__StringSplit(arr[i + 1], "#")[1],
-                " "
-            )
-            options = __TS__ArrayFilter(
+            local name
+            local langname
+            local comment = (function()
+                local __tmp = arr[i + 1]
+                return __tmp:split("#")
+            end)()[2]
+            local options = (function()
+                local __tmp = (function()
+                    local __tmp = arr[i + 1]
+                    return __tmp:split("#")
+                end)()[1]
+                return __tmp:split(" ")
+            end)()
+            options =
+                table.filter(
                 options,
-                function(____, e) return e ~= "" end
+                function(a)
+                    return a ~= ""
+                end
             )
-            local name = options[1]
-            local langname = string.lower(__TS__StringSplit(name, "_")[1])
-            if langname == string.lower(lang) or lang == "" or langname == "any" then
-                local parts = __TS__StringSplit(name, "_")
-                local out
+            if #options == 0 then
+                goto continue
+            end
+            name = options[1]
+            langname = (function()
+                local __tmp = name:split("_")[1]
+                return __tmp:lower()
+            end)()
+            if langname == lang:lower() or lang == "" or langname == "any" then
+                local parts = name:split("_")
+                local out = ""
                 if #parts == 1 then
                     out = parts[1]
                 else
-                    out = parts[1] .. ": "
-                    table.remove(parts, 1)
-                    out = out .. table.concat(parts, " ")
+                    out = string.format([=[%s: ]=], parts[1])
+                    table.shift(parts)
+                    out = string.format([=[%s%s]=], out, table.concat(parts, " "))
                 end
-                local wd = 34
-                local rn = math.max(0, wd - #out)
-                out = out .. (string.rep(
-                    " ",
-                    math.floor(rn)
-                ) .. " ") .. (comment == nil and "" or comment)
-                tbl[#tbl + 1] = {out, name}
+                local width = 34
+                local repeatNum = math.max(0, width - #out)
+                out =
+                    string.format(
+                    [=[%s%s %s]=],
+                    out,
+                    (function()
+                        local __tmp = " "
+                        return __tmp["repeat"](__tmp, repeatNum)
+                    end)(),
+                    (function()
+                        if comment == nil then
+                            return ""
+                        else
+                            return comment
+                        end
+                    end)()
+                )
+                table.insert(tbl, {out, name})
+                local _null
             end
-            i = i + 1
+            ::continue::
+            (function()
+                i = i + 1
+                return i
+            end)()
         end
     end
     return tbl
 end
----
--- @summary Checks if argument is defined as keyword (i.e "FILEPATH", "FILEEXT") and
--- returns corresponding string. If argument is not keyword function returns single space
--- @param arg Argument to check
 local function check_keyword_arg(arg)
     repeat
-        local ____switch20 = arg
-        local ____cond20 = ____switch20 == "FILEPATH"
-        if ____cond20 then
+        local caseExp = arg
+        if caseExp == "FILEPATH" then
             return vim.fn.expand("%:p")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "FILENAME"
-        if ____cond20 then
+        elseif caseExp == "FILENAME" then
             return vim.fn.expand("%:t")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "FILEDIR"
-        if ____cond20 then
+        elseif caseExp == "FILEDIR" then
             return vim.fn.expand("%:p:h")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "FILEEXT"
-        if ____cond20 then
+        elseif caseExp == "FILEEXT" then
             return vim.fn.expand("%:e")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "FILENOEXT"
-        if ____cond20 then
+        elseif caseExp == "FILENOEXT" then
             return vim.fn.expand("%:t:r")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "CWD"
-        if ____cond20 then
+        elseif caseExp == "CWD" then
             return vim.fn.getcwd()
-        end
-        ____cond20 = ____cond20 or ____switch20 == "RELPATH"
-        if ____cond20 then
+        elseif caseExp == "RELPATH" then
             return vim.fn.expand("%")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "RELDIR"
-        if ____cond20 then
+        elseif caseExp == "RELDIR" then
             return vim.fn.expand("%:h")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "TIME"
-        if ____cond20 then
+        elseif caseExp == "TIME" then
             return os.date("%H:%M:%S")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "DATE"
-        if ____cond20 then
+        elseif caseExp == "DATE" then
             return os.date("%d/%m/%Y")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "USDATE"
-        if ____cond20 then
+        elseif caseExp == "USDATE" then
             return os.date("%m/%d/%Y")
-        end
-        ____cond20 = ____cond20 or ____switch20 == "USERNAME"
-        if ____cond20 then
+        elseif caseExp == "USERNAME" then
             return os.getenv("USER")
+        elseif caseExp == "PCNAME" then
+            return (function()
+                local __tmp = vim.fn.system("uname -a")
+                return __tmp:split(" ")
+            end)()[2]
+        elseif caseExp == "OS" then
+            return (function()
+                local __tmp = vim.fn.system("uname")
+                return __tmp:split("\n")
+            end)()[1]
+        else
+            break
         end
-        ____cond20 = ____cond20 or ____switch20 == "PCNAME"
-        if ____cond20 then
-            return __TS__StringSplit(
-                vim.fn.system("uname -a"),
-                " "
-            )[2]
-        end
-        ____cond20 = ____cond20 or ____switch20 == "OS"
-        if ____cond20 then
-            return __TS__StringSplit(
-                vim.fn.system("uname"),
-                "\n"
-            )[1]
-        end
-        do
-            return " "
-        end
-    until true
+    until (false)
+    return " "
 end
-local function get_build_args(build_name)
-    local justloc = ""
-    local pjustfile = vim.fn.getcwd() .. "/justfile"
-    if vim.fn.filereadable(pjustfile) == 1 then
-        justloc = "just -f " .. pjustfile
+local function get_task_args(task_name)
+    local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
+    if vim.fn.filereadable(justfile) ~= 1 then
+        error("Justfile not found in project directory")
     end
-    if justloc == "" then
-        popup("Justfile not found in project directory", "error", "Just")
+    local task_info = vim.fn.system(string.format([=[just -f %s -s %s]=], justfile, task_name))
+    if task_info:starts_with("alias") then
+        task_info = task_info:sub(task_info:find("\n") + 1)
+    end
+    if task_info:starts_with("#") then
+        task_info = task_info:sub(task_info:find("\n") + 1)
+    end
+    local task_signature = task_info:split(":")[1]
+    local task_args = task_signature:split(" ")
+    table.shift(task_args)
+    if #task_args == 0 then
         return {}
     end
-    local outshow = vim.fn.system((justloc .. " -s ") .. build_name)
-    if __TS__StringStartsWith(outshow, "alias") then
-        outshow = __TS__StringSubstring(
-            outshow,
-            (string.find(outshow, "\n", nil, true) or 0) - 1 + 1
-        )
-    end
-    if __TS__StringStartsWith(outshow, "#") then
-        outshow = __TS__StringSubstring(
-            outshow,
-            (string.find(outshow, "\n", nil, true) or 0) - 1 + 1
-        )
-    end
-    local outinfo = __TS__StringSplit(outshow, ":")[1]
-    local args = __TS__StringSplit(outinfo, " ")
-    table.remove(args, 1)
-    if #args == 0 then
-        return {}
-    end
-    local argsout = {}
+    local out_args = {}
     do
         local i = 0
-        while i < #args do
-            local arg = args[i + 1]
-            local keywd = check_keyword_arg(arg)
-            if keywd == " " then
-                local a = ""
-                if __TS__StringIncludes(arg, "=") then
-                    local argw = __TS__StringSplit(arg, "=")
-                    a = vim.fn.input(argw[1] .. ": ", argw[2])
+        while i < #task_args do
+            local arg = task_args[i + 1]
+            local keyword = check_keyword_arg(arg)
+            if keyword == " " then
+                local ask = ""
+                if arg:contains("=") then
+                    local arg_comp = arg:split("=")
+                    ask = vim.fn.input(string.format([=[%s: ]=], arg_comp[1]), arg_comp[2])
                 else
-                    a = vim.fn.input(arg .. ": ", "")
+                    ask = vim.fn.input(string.format([=[%s: ]=], arg), "")
                 end
-                argsout[#argsout + 1] = a
+                table.insert(out_args, string.format([=[%s]=], ask))
             else
-                if keywd == "" then
-                    keywd = " "
+                if keyword == "" then
+                    keyword = " "
                 end
-                argsout[#argsout + 1] = ("\"" .. keywd) .. "\""
+                table.insert(out_args, string.format([=[%s]=], keyword))
             end
-            i = i + 1
+            (function()
+                i = i + 1
+                return i
+            end)()
         end
     end
-    return argsout
+    return out_args
 end
-local function build_runner(build_name)
-    if asyncWorker ~= nil then
-        popup("Just task is already running", "error", "Just")
+local function task_runner(task_name)
+    if async_worker ~= nil then
+        error("Task is already running")
         return
     end
-    local args = get_build_args(build_name)
-    local justloc = ""
-    local pjustfile = vim.fn.getcwd() .. "/justfile"
-    if vim.fn.filereadable(pjustfile) == 1 then
-        justloc = "just -f " .. pjustfile
-    end
-    if justloc == "" then
-        popup("Justfile not found in project directory", "error", "Just")
+    local args = get_task_args(task_name)
+    local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
+    if vim.fn.filereadable(justfile) ~= 1 then
+        error("Justfile not found in project directory")
         return
     end
-    local handle = progress.handle.create({title = "", message = ("Starting task " .. build_name) .. "...", lsp_client = {name = "Just"}, percentage = 0})
-    local command = (((justloc .. " -d . ") .. build_name) .. " ") .. table.concat(args, " ")
-    vim.schedule(function()
-        local op_cond = config.copen_on_run and build_name == "run" or config.copen_on_any
-        if op_cond then
-            vim.cmd("copen")
+    local handle =
+        progress.handle.create(
+        {
+            title = "",
+            message = string.format([=[Starting task "%s"]=], task_name),
+            lsp_client = {name = "Just"},
+            percentage = 0
+        }
+    )
+    local command = string.format([=[just -f %s -d . %s %s]=], justfile, task_name, table.concat(args, " "))
+    vim.schedule(
+        function()
+            local should_open_qf = (config.copen_on_run and task_name == "run") or config.copen_on_any
+            if should_open_qf then
+                vim.cmd("copen")
+            end
+            vim.fn.setqflist({{text = string.format([=[Starting task: %s]=], command)}, {text = ""}}, "r")
+            if should_open_qf then
+                vim.cmd("wincmd p")
+            end
         end
-        vim.fn.setqflist({{text = "Starting just task: " .. command}, {text = ""}}, "r")
-        if op_cond then
-            vim.cmd("wincmd p")
-        end
-    end)
-    local stime = os.clock()
+    )
+    local start_time = os.clock()
     local function sleep(t)
         local sec = os.clock() + t
         while os.clock() < sec do
         end
     end
-    local function onStdoutFunc(err, data)
-        vim.schedule(function()
-            if asyncWorker == nil then
-                return
-            end
-            if data == "" then
-                data = " "
-            end
-            data = __TS__StringReplace(data, "warning", "Warning")
-            data = __TS__StringReplace(data, "info", "Info")
-            data = __TS__StringReplace(data, "error", "Error")
-            data = __TS__StringReplace(data, "note", "Note")
-            data = __TS__StringReplaceAll(data, "'", "''")
-            data = __TS__StringReplaceAll(data, "\0", "")
-            vim.cmd(("caddexpr '" .. data) .. "'")
-            vim.cmd("cbottom")
-            if #data > config.message_limit then
-                data = __TS__StringSlice(data, 0, config.message_limit - 1) .. "..."
-            end
-            handle.message = data
-        end)
-    end
-    local function onStderrFunc(err, data)
-        local timer = vim.loop.new_timer()
-        timer:start(
-            10,
-            0,
-            vim.schedule_wrap(function()
-                if asyncWorker == nil then
+    local on_stdout_func = function(err, data)
+        vim.schedule(
+            function()
+                if async_worker == nil then
                     return
                 end
                 if data == "" then
                     data = " "
                 end
-                data = __TS__StringReplace(data, "warning", "Warning")
-                data = __TS__StringReplace(data, "info", "Info")
-                data = __TS__StringReplace(data, "error", "Error")
-                data = __TS__StringReplace(data, "note", "Note")
-                data = __TS__StringReplaceAll(data, "'", "''")
-                data = __TS__StringReplaceAll(data, "\0", "")
-                vim.cmd(("caddexpr '" .. data) .. "'")
+                data = data:replace("warning", "Warning")
+                data = data:replace("info", "Info")
+                data = data:replace("error", "Error")
+                data = data:replace("note", "Note")
+                data = data:replace_all("'", "''")
+                data = data:replace_all("\0", "")
+                vim.cmd(string.format([=[caddexpr '%s']=], data))
                 vim.cmd("cbottom")
                 if #data > config.message_limit then
-                    data = __TS__StringSlice(data, 0, config.message_limit - 1) .. "..."
+                    data = string.format([=[%s...]=], data:sub(1, config.message_limit))
                 end
                 handle.message = data
-            end)
+            end
         )
     end
-    asyncWorker = async:new({
-        command = "bash",
-        args = {"-c", ("( " .. command) .. " )"},
-        cwd = vim.fn.getcwd(),
-        on_exit = function(j, ret)
-            local etime = os.clock() - stime
-            local timer = vim.loop.new_timer()
-            timer:start(
-                50,
-                0,
-                vim.schedule_wrap(function()
-                    local status = ""
-                    if asyncWorker == nil then
-                        handle.message = "Cancelled"
-                        handle:cancel()
-                        status = "Cancelled"
-                    else
-                        if ret == 0 then
-                            handle.message = "Finished"
-                            handle:finish()
-                            status = "Finished"
-                        else
-                            handle.message = "Failed"
-                            handle:finish()
-                            status = "Failed"
-                            if config.copen_on_error then
-                                vim.cmd("copen")
-                            end
-                        end
+    local on_stderr_func = function(err, data)
+        local timer = vim.loop.new_timer()
+        timer:start(
+            10,
+            0,
+            vim.schedule_wrap(
+                function()
+                    if async_worker == nil then
+                        return
                     end
-                    vim.fn.setqflist(
-                        {
-                            {text = ""},
-                            {text = ((status .. " in ") .. string.format("%.2f", etime)) .. " seconds"}
-                        },
-                        "a"
-                    )
+                    if data == "" then
+                        data = " "
+                    end
+                    data = data:replace("warning", "Warning")
+                    data = data:replace("info", "Info")
+                    data = data:replace("error", "Error")
+                    data = data:replace("note", "Note")
+                    data = data:replace_all("'", "''")
+                    data = data:replace_all("\0", "")
+                    vim.cmd(string.format([=[caddexpr '%s']=], data))
                     vim.cmd("cbottom")
-                    if config.play_sound then
-                        if ret == 0 then
-                            async:new({
-                                command = "aplay",
-                                args = {
-                                    getConfigDir() .. "/build_success.wav",
-                                    "-q"
-                                }
-                            }):start()
-                        else
-                            async:new({
-                                command = "aplay",
-                                args = {
-                                    getConfigDir() .. "/build_error.wav",
-                                    "-q"
-                                }
-                            }):start()
-                        end
+                    if #data > config.message_limit then
+                        data = string.format([=[%s...]=], data:sub(1, config.message_limit))
                     end
-                    asyncWorker = nil
-                end)
+                    handle.message = data
+                end
             )
-        end,
-        on_stdout = onStdoutFunc,
-        on_stderr = onStderrFunc
-    })
-    if asyncWorker ~= nil then
-        asyncWorker:start()
+        )
+    end
+    async_worker =
+        async:new(
+        {
+            command = "bash",
+            args = {"-c", string.format([=[( %s )]=], command)},
+            cwd = vim.fn.getcwd(),
+            on_exit = function(j, ret)
+                local end_time = os.clock() - start_time
+                local timer = vim.loop.new_timer()
+                timer:start(
+                    50,
+                    0,
+                    vim.schedule_wrap(
+                        function()
+                            local status = ""
+                            if async_worker == nil then
+                                handle.message = "Cancelled"
+                                handle:cancel()
+                                status = "Cancelled"
+                            else
+                                if ret == 0 then
+                                    handle.message = "Finished"
+                                    handle:finish()
+                                    status = "Finished"
+                                else
+                                    handle.message = "Failed"
+                                    handle:finish()
+                                    status = "Failed"
+                                    if config.copen_on_error then
+                                        vim.cmd("copen")
+                                        vim.cmd("wincmd p")
+                                    end
+                                end
+                            end
+                            vim.fn.setqflist(
+                                {
+                                    {text = ""},
+                                    {
+                                        text = string.format(
+                                            [=[%s in %s seconds]=],
+                                            status,
+                                            string.format("%.2f", end_time)
+                                        )
+                                    }
+                                },
+                                "a"
+                            )
+                            vim.cmd("cbottom")
+                            if config.play_sound then
+                                if ret == 0 then
+                                    (function()
+                                        local __tmp =
+                                            async:new(
+                                            {
+                                                command = "aplay",
+                                                args = {
+                                                    string.format([=[%s/build_success.wav]=], get_config_dir()),
+                                                    "-q"
+                                                }
+                                            }
+                                        )
+                                        return __tmp:start()
+                                    end)()
+                                else
+                                    (function()
+                                        local __tmp =
+                                            async:new(
+                                            {
+                                                command = "aplay",
+                                                args = {string.format([=[%s/build_error.wav]=], get_config_dir()), "-q"}
+                                            }
+                                        )
+                                        return __tmp:start()
+                                    end)()
+                                end
+                            end
+                            async_worker = nil
+                        end
+                    )
+                )
+            end,
+            on_stdout = on_stdout_func,
+            on_stderr = on_stderr_func
+        }
+    )
+    if async_worker ~= nil then
+        async_worker:start()
     end
 end
-function ____exports.build_select(opts)
+local function task_select(opts)
     if opts == nil then
         opts = {}
     end
-    local tasks = get_build_names()
+    local tasks = get_task_names()
     if #tasks == 0 then
         return
     end
-    local picker = pickers.new(
+    local picker =
+        pickers.new(
         opts,
         {
             prompt_title = "Just tasks",
             border = {},
             borderchars = config.telescope_borders.preview,
-            finder = finders.new_table({
-                results = tasks,
-                entry_maker = function(entry)
-                    return {value = entry, display = entry[1], ordinal = entry[1]}
-                end
-            }),
+            finder = finders.new_table(
+                {
+                    results = tasks,
+                    entry_maker = function(entry)
+                        return {value = entry, display = entry[1], ordinal = entry[1]}
+                    end
+                }
+            ),
             sorter = conf.generic_sorter(opts),
             attach_mappings = function(buf, map)
-                actions.select_default:replace(function()
-                    actions.close(buf)
-                    local selection = action_state.get_selected_entry()
-                    local build_name = selection.value[2]
-                    build_runner(build_name)
-                end)
+                (function()
+                    local __tmp = actions.select_default
+                    return __tmp:replace(
+                        function()
+                            actions.close(buf)
+                            local selection = action_state.get_selected_entry()
+                            local build_name = selection.value[2]
+                            task_runner(build_name)
+                        end
+                    )
+                end)()
                 return true
             end
         }
     )
     picker:find()
 end
-function ____exports.run_task_select()
-    local tasks = get_build_names()
+local function run_task_select()
+    local tasks = get_task_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Just")
+        warning("There are no tasks defined in justfile")
         return
     end
-    ____exports.build_select(themes.get_dropdown({borderchars = config.telescope_borders}))
+    task_select(themes.get_dropdown({borderchars = config.telescope_borders}))
 end
-function ____exports.run_task_default()
-    local tasks = get_build_names()
+local function run_task_name(task_name)
+    local tasks = get_task_names()
     if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Just")
-        return
-    end
-    do
-        local i = 0
-        while i < #tasks do
-            local opts = __TS__StringSplit(tasks[i + 1][2], "_")
-            if #opts == 1 then
-                if string.lower(opts[1]) == "default" then
-                    build_runner(tasks[i + 1][2])
-                    return
-                end
-            end
-            i = i + 1
-        end
-    end
-    popup("Could not find default task. \nPlease select task from list.", "warn", "Just")
-    ____exports.run_task_select()
-end
-function ____exports.run_task_build()
-    local tasks = get_build_names()
-    if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Just")
+        warning("There are no tasks defined in justfile")
         return
     end
     do
         local i = 0
         while i < #tasks do
-            local opts = __TS__StringSplit(tasks[i + 1][2], "_")
+            local opts = (function()
+                local __tmp = tasks[i + 1][2]
+                return __tmp:split("_")
+            end)()
             if #opts == 1 then
-                if string.lower(opts[1]) == "build" then
-                    build_runner(tasks[i + 1][2])
+                if (function()
+                        local __tmp = opts[1]
+                        return __tmp:lower()
+                    end)() == task_name then
+                    task_runner(tasks[i + 1][2])
                     return
                 end
             end
-            i = i + 1
+            (function()
+                i = i + 1
+                return i
+            end)()
         end
     end
-    popup("Could not find just task. \nPlease select task from list.", "warn", "Just")
-    ____exports.run_task_select()
+    warning("Could not find just task. \nPlease select task from list.")
+    run_task_select()
 end
-function ____exports.run_task_run()
-    local tasks = get_build_names()
-    if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Just")
-        return
-    end
-    do
-        local i = 0
-        while i < #tasks do
-            local opts = __TS__StringSplit(tasks[i + 1][2], "_")
-            if #opts == 1 then
-                if string.lower(opts[1]) == "run" then
-                    build_runner(tasks[i + 1][2])
-                    return
-                end
-            end
-            i = i + 1
-        end
-    end
-    popup("Could not find run task. \nPlease select task from list.", "warn", "Just")
-    ____exports.run_task_select()
+local function run_task_default()
+    run_task_name("default")
 end
-function ____exports.run_task_test()
-    local tasks = get_build_names()
-    if #tasks == 0 then
-        popup("There are no tasks defined in justfile", "warn", "Just")
-        return
-    end
-    do
-        local i = 0
-        while i < #tasks do
-            local opts = __TS__StringSplit(tasks[i + 1][2], "_")
-            if #opts == 1 then
-                if string.lower(opts[1]) == "test" then
-                    build_runner(tasks[i + 1][2])
-                    return
-                end
-            end
-            i = i + 1
-        end
-    end
-    popup("Could not find test task. \nPlease select task from list.", "warn", "Just")
-    ____exports.run_task_select()
+local function run_task_build()
+    run_task_name("build")
 end
-function ____exports.stop_current_task()
-    if asyncWorker ~= nil then
-        asyncWorker:shutdown()
-    end
-    asyncWorker = nil
+local function run_task_run()
+    run_task_name("run")
 end
-function ____exports.add_build_template()
-    local pjustfile = vim.fn.getcwd() .. "/justfile"
-    if vim.fn.filereadable(pjustfile) == 1 then
+local function run_task_test()
+    run_task_name("test")
+end
+local function stop_current_task()
+    if async_worker ~= nil then
+        async_worker:shutdown()
+    end
+    async_worker = nil
+end
+local function add_task_template()
+    local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
+    if vim.fn.filereadable(justfile) == 1 then
         local opt = vim.fn.confirm("Justfile already exists in this project, create anyway?", "&Yes\n&No", 2)
         if opt ~= 1 then
             return
         end
     end
-    local f = io.open(pjustfile, "w")
-    f:write((((((((((((("#!/usr/bin/env -S just --justfile" .. "\n") .. "# just reference  : https://just.systems/man/en/") .. "\n") .. "") .. "\n") .. "@default:") .. "\n") .. "    just --list") .. "\n") .. "") .. "\n") .. "") .. "\n")
+    local f = io.open(justfile, "w")
+    local empty = ""
+    f:write(
+        string.format(
+            [=[#!/usr/bin/env -S just --justfile%s
+# just reference  : https://just.systems/man/en/
+
+@default:
+    just --list
+]=],
+            empty
+        )
+    )
     f:close()
-    popup("Template justfile created", "info", "Just")
+    info("Template justfile created")
 end
-function ____exports.add_make_build_template()
-    local pjustfile = vim.fn.getcwd() .. "/justfile"
-    if vim.fn.filereadable(pjustfile) == 1 then
+local function add_make_task_template()
+    local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
+    if vim.fn.filereadable(justfile) == 1 then
         local opt = vim.fn.confirm("Justfile already exists in this project, create anyway?", "&Yes\n&No", 2)
         if opt ~= 1 then
             return
         end
     end
-    local f = io.open(pjustfile, "w")
-    f:write((((((((((((((((((((((((((((((((((((((((((("#!/usr/bin/env -S just --justfile" .. "\n") .. "# just reference  : https://just.systems/man/en/") .. "\n") .. "") .. "\n") .. "@default:") .. "\n") .. "    just --list") .. "\n") .. "") .. "\n") .. "build file: (track file) && (hash file)") .. "\n") .. "    echo \"Compiling file\"") .. "\n") .. "") .. "\n") .. "# Don't forget to add '.hashes' to gitignore") .. "\n") .. "[private]") .. "\n") .. "[no-exit-message]") .. "\n") .. "track file:") .. "\n") .. "    #!/usr/bin/env bash") .. "\n") .. "    [ ! -f .hashes ] && touch .hashes") .. "\n") .. "    [[ \"$(md5sum {{file}} | head -c 32)\" == \"$(grep \" {{file}}$\" .hashes | head -c 32)\" ]] && exit 1 || exit 0") .. "\n") .. "") .. "\n") .. "[private]") .. "\n") .. "hash file: (track file)") .. "\n") .. "    #!/usr/bin/env bash") .. "\n") .. "    echo \"$(grep -v \" {{file}}$\" .hashes)\" > .hashes && md5sum {{file}} >> .hashes") .. "\n") .. "") .. "\n")
+    local f = io.open(justfile, "w")
+    local empty = ""
+    f:write(
+        string.format(
+            [=[#!/usr/bin/env -S just --justfile%s
+# just reference  : https://just.systems/man/en/
+
+@default:
+    just --list
+
+build file: (track file) && (hash file)
+    echo "Compiling file"
+
+# Don't forget to add '.hashes' to gitignore
+[private]
+[no-exit-message]
+track file:
+    #!/usr/bin/env bash
+    [ ! -f .hashes ] && touch .hashes
+    [[ "$(md5sum {{file}} | head -c 32)" == "$(grep " {{file}}$" .hashes | head -c 32)" ]] && exit 1 || exit 0
+
+[private]
+hash file: (track file)
+    #!/usr/bin/env bash
+    echo "$(grep -v " {{file}}$" .hashes)" > .hashes && md5sum {{file}} >> .hashes
+]=],
+            empty
+        )
+    )
     f:close()
-    popup("Template make justfile created", "info", "Just")
+    info("Template make justfile created")
 end
-local function tableToDict(tbl)
+local function table_to_dict(tbl)
     local out = {}
-    for ____, ____value in ipairs(__TS__ObjectEntries(tbl)) do
-        local key = ____value[1]
-        local value = ____value[2]
+    for key, value, __ in pairs(tbl) do
         out[key] = value
     end
     return out
 end
-local function getBoolOption(opts, key, p_default)
+local function get_bool_option(opts, key, p_default)
     if opts[key] ~= nil then
         if opts[key] == true then
             return true
@@ -920,53 +609,61 @@ local function getBoolOption(opts, key, p_default)
     end
     return p_default
 end
-local function getAnyOption(opts, key, p_default)
+local function get_any_option(opts, key, p_default)
     if opts[key] ~= nil then
         return opts[key]
     end
     return p_default
 end
-local function getSubTableOption(opts, key1, key2, p_default)
-    if opts[key1] ~= nil then
-        local o = opts[key1]
-        if o[key2] ~= nil then
-            return o[key2]
+local function get_subtable_option(opts, key, sub_key, p_default)
+    if opts[key] ~= nil then
+        local o = opts[key]
+        if o[sub_key] ~= nil then
+            return o[sub_key]
         end
     end
     return p_default
 end
-local function ____error(msg)
-    local ok, ignore = pcall(require, "notify")
-    if not ok then
-        vim.api.nvim_err_writeln(msg)
-    else
-        require("notify")(msg, "error")
-    end
-end
-function ____exports.setup(opts)
-    opts = tableToDict(opts)
-    config.message_limit = getAnyOption(opts, "fidget_message_limit", config.message_limit)
-    config.play_sound = getBoolOption(opts, "play_sound", config.play_sound)
-    config.copen_on_error = getBoolOption(opts, "open_qf_on_error", config.copen_on_error)
-    config.copen_on_run = getBoolOption(opts, "open_qf_on_run", config.copen_on_run)
-    config.copen_on_any = getBoolOption(opts, "open_qf_on_any", config.copen_on_any)
-    config.telescope_borders.prompt = getSubTableOption(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
-    config.telescope_borders.results = getSubTableOption(opts, "telescope_borders", "results", config.telescope_borders.results)
-    config.telescope_borders.preview = getSubTableOption(opts, "telescope_borders", "preview", config.telescope_borders.preview)
-    vim.api.nvim_create_user_command("JustDefault", ____exports.run_task_default, {desc = "Run default task with just"})
-    vim.api.nvim_create_user_command("JustBuild", ____exports.run_task_build, {desc = "Run build task with just"})
-    vim.api.nvim_create_user_command("JustRun", ____exports.run_task_run, {desc = "Run run task with just"})
-    vim.api.nvim_create_user_command("JustTest", ____exports.run_task_test, {desc = "Run test task with just"})
-    vim.api.nvim_create_user_command("JustSelect", ____exports.run_task_select, {desc = "Open task picker"})
-    vim.api.nvim_create_user_command("JustStop", ____exports.stop_current_task, {desc = "Stops current task"})
-    vim.api.nvim_create_user_command("JustCreateTemplate", ____exports.add_build_template, {desc = "Creates template for just"})
-    vim.api.nvim_create_user_command("JustMakeTemplate", ____exports.add_make_build_template, {desc = "Creates make-like template for just"})
+local function setup(opts)
+    opts = table_to_dict(opts)
+    config.message_limit = get_any_option(opts, "fidget_message_limit", config.message_limit)
+    config.play_sound = get_bool_option(opts, "play_sound", config.play_sound)
+    config.copen_on_error = get_bool_option(opts, "open_qf_on_error", config.copen_on_error)
+    config.copen_on_run = get_bool_option(opts, "open_qf_on_run", config.copen_on_run)
+    config.copen_on_any = get_bool_option(opts, "open_qf_on_any", config.copen_on_any)
+    config.telescope_borders.prompt =
+        get_subtable_option(opts, "telescope_borders", "prompt", config.telescope_borders.prompt)
+    config.telescope_borders.results =
+        get_subtable_option(opts, "telescope_borders", "results", config.telescope_borders.results)
+    config.telescope_borders.preview =
+        get_subtable_option(opts, "telescope_borders", "preview", config.telescope_borders.preview)
+    vim.api.nvim_create_user_command("JustDefault", run_task_default, {desc = "Run default task with just"})
+    vim.api.nvim_create_user_command("JustBuild", run_task_build, {desc = "Run build task with just"})
+    vim.api.nvim_create_user_command("JustRun", run_task_run, {desc = "Run run task with just"})
+    vim.api.nvim_create_user_command("JustTest", run_task_test, {desc = "Run test task with just"})
+    vim.api.nvim_create_user_command("JustSelect", run_task_select, {desc = "Open task picker"})
+    vim.api.nvim_create_user_command("JustStop", stop_current_task, {desc = "Stops current task"})
+    vim.api.nvim_create_user_command("JustCreateTemplate", add_task_template, {desc = "Creates template for just"})
+    vim.api.nvim_create_user_command(
+        "JustMakeTemplate",
+        add_make_task_template,
+        {desc = "Creates make-like template for just"}
+    )
     if config.play_sound and vim.fn.executable("aplay") ~= 1 then
         config.play_sound = false
-        ____error("Failed to find 'aplay' binary on system. Disabling just.nvim play_sound")
+        error("Failed to find 'aplay' binary on system. Disabling just.nvim play_sound")
     end
 end
-return ____exports
- end,
-}
-return require("src.init", ...)
+_M.task_select = task_select
+_M.run_task_select = run_task_select
+_M.run_task_name = run_task_name
+_M.run_task_default = run_task_default
+_M.run_task_build = run_task_build
+_M.run_task_run = run_task_run
+_M.run_task_test = run_task_test
+_M.stop_current_task = stop_current_task
+_M.add_task_template = add_task_template
+_M.add_make_task_template = add_make_task_template
+_M.setup = setup
+return _M
+
