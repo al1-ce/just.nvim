@@ -54,13 +54,7 @@ local function inspect(val)
     print(vim.inspect(val))
 end
 local function get_config_dir()
-    return vim.fn.fnamemodify(
-        (function()
-            local __tmp = debug.getinfo(1).source
-            return __tmp:sub(2)
-        end)(),
-        ":p:h"
-    )
+    return vim.fn.fnamemodify(debug.getinfo(1).source:sub(2), ":p:h")
 end
 local function get_task_names(lang)
     if lang == nil then
@@ -71,10 +65,7 @@ local function get_task_names(lang)
     if vim.fn.filereadable(justfile) == 1 then
         local taskList = vim.fn.system(string.format([=[just -f %s --list]=], justfile))
         local taskArray = taskList:split("\n")
-        if (function()
-                local __tmp = taskArray[1]
-                return __tmp:starts_with("error")
-            end)() then
+        if taskArray[1]:starts_with("error") then
             error(taskList)
             return {}
         end
@@ -91,17 +82,8 @@ local function get_task_names(lang)
         while i < #arr do
             local name
             local langname
-            local comment = (function()
-                local __tmp = arr[i + 1]
-                return __tmp:split("#")
-            end)()[2]
-            local options = (function()
-                local __tmp = (function()
-                    local __tmp = arr[i + 1]
-                    return __tmp:split("#")
-                end)()[1]
-                return __tmp:split(" ")
-            end)()
+            local comment = arr[i + 1]:split("#")[2]
+            local options = arr[i + 1]:split("#")[1]:split(" ")
             options =
                 table.filter(
                 options,
@@ -113,10 +95,7 @@ local function get_task_names(lang)
                 goto continue
             end
             name = options[1]
-            langname = (function()
-                local __tmp = name:split("_")[1]
-                return __tmp:lower()
-            end)()
+            langname = name:split("_")[1]:lower()
             if langname == lang:lower() or lang == "" or langname == "any" then
                 local parts = name:split("_")
                 local out = ""
@@ -453,17 +432,14 @@ local function task_select(opts)
             ),
             sorter = conf.generic_sorter(opts),
             attach_mappings = function(buf, map)
-                (function()
-                    local __tmp = actions.select_default
-                    return __tmp:replace(
-                        function()
-                            actions.close(buf)
-                            local selection = action_state.get_selected_entry()
-                            local build_name = selection.value[2]
-                            task_runner(build_name)
-                        end
-                    )
-                end)()
+                actions.select_default:replace(
+                    function()
+                        actions.close(buf)
+                        local selection = action_state.get_selected_entry()
+                        local build_name = selection.value[2]
+                        task_runner(build_name)
+                    end
+                )
                 return true
             end
         }
@@ -487,15 +463,9 @@ local function run_task_name(task_name)
     do
         local i = 0
         while i < #tasks do
-            local opts = (function()
-                local __tmp = tasks[i + 1][2]
-                return __tmp:split("_")
-            end)()
+            local opts = tasks[i + 1][2]:split("_")
             if #opts == 1 then
-                if (function()
-                        local __tmp = opts[1]
-                        return __tmp:lower()
-                    end)() == task_name then
+                if opts[1]:lower() == task_name then
                     task_runner(tasks[i + 1][2])
                     return
                 end
