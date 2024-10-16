@@ -254,8 +254,9 @@ function task_runner(task_name) {
     }
 
     let on_stderr_func = function (err, data) {
+        new vim.schedule(() => append_qf_data(data));
         // Either fully after or fully before. I prefer after
-        new vim.defer_fn(function () { append_qf_data(data); }, 10);
+        // new vim.defer_fn(function () { append_qf_data(data); }, 10);
     }
 
     let just_args = [
@@ -311,7 +312,6 @@ function task_runner(task_name) {
                 if (config.play_sound) {
                     if (ret == 0) {
                         async.new({
-
                             command: "aplay",
                             args: [`${get_config_dir()}/build_success.wav`, "-q"]
                         }).start();

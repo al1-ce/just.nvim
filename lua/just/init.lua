@@ -307,9 +307,9 @@ local function task_runner(task_name)
 		end)
 	end;
 	local on_stderr_func = function(err, data)
-		vim.defer_fn(function()
-			append_qf_data(data)
-		end, 10)
+		vim.schedule(function()
+			return append_qf_data(data)
+		end)
 	end;
 	local just_args = {
 		"-f",
