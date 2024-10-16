@@ -78,7 +78,7 @@ function get_task_names(lang = "") {
         // taskArray.shift();
         // taskArray.pop();
         new table.shift(taskArray);
-        new table.pop(taskArray);
+        // new table.pop(taskArray);
         arr = taskArray;
     } else {
         error("Justfile not found in project directory");
@@ -349,6 +349,13 @@ export function task_select(opts) {
     if (opts == null) opts = [];
     let tasks = get_task_names();
     if (tasks.length == 0) return;
+    // let has_telescope = pack2(pcall(require, "telescope"))[1];
+    //
+    // if (!has_telescope) {
+    //     let sel = new vim.fn.inputlist(tasks);
+    //     // TODO: implement
+    // }
+
     let picker = new pickers.new(opts, {
         prompt_title: "Just tasks",
         border: {},
