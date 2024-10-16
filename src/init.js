@@ -261,7 +261,7 @@ function task_runner(task_name) {
         timer.start(10, 0, new vim.schedule_wrap(function () { append_qf_data(data) }));
     }
 
-    async_worker = new async.new({
+    async_worker = async.new({
         command: "bash",
         args: ["-c", `( ${command} )`],
         cwd: new vim.fn.getcwd(),
@@ -299,12 +299,13 @@ function task_runner(task_name) {
 
                 if (config.play_sound) {
                     if (ret == 0) {
-                        new async.new({
+                        async.new({
+
                             command: "aplay",
                             args: [`${get_config_dir()}/build_success.wav`, "-q"]
                         }).start();
                     } else {
-                        new async.new({
+                        async.new({
                             command: "aplay",
                             args: [`${get_config_dir()}/build_error.wav`, "-q"]
                         }).start();

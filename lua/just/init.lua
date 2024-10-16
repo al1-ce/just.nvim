@@ -313,7 +313,7 @@ local function task_runner(task_name)
 			append_qf_data(data)
 		end))
 	end;
-	async_worker = async.new({
+	async_worker = async:new({
 		command = "bash",
 		args = {
 			"-c",
@@ -356,7 +356,7 @@ local function task_runner(task_name)
 				if config.play_sound then
 					if ret == 0 then
 						(function()
-							local __tmp = async.new({
+							local __tmp = async:new({
 								command = "aplay",
 								args = {
 									string.format([=[%s/build_success.wav]=], get_config_dir()),
@@ -367,7 +367,7 @@ local function task_runner(task_name)
 						end)()
 					else
 						(function()
-							local __tmp = async.new({
+							local __tmp = async:new({
 								command = "aplay",
 								args = {
 									string.format([=[%s/build_error.wav]=], get_config_dir()),
