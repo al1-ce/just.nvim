@@ -236,40 +236,51 @@ function task_runner(task_name) {
         // every type of compiler or something, so, replacing first
         // thing that there is is a fine compromise
         // If you don't like this just comment those
-        data = new data.replace("warning", "Warning");
-        data = new data.replace("info", "Info");
-        data = new data.replace("error", "Error");
-        data = new data.replace("note", "Note");
-        data = new data.replace_all("'", "''");
-        data = new data.replace_all("\0", "");
-        // popup(data);
+        data = data.replace("warning", "Warning");
+        data = data.replace("info", "Info");
+        data = data.replace("error", "Error");
+        data = data.replace("note", "Note");
+        data = data.replace_all("'", "''");
+        data = data.replace_all("\0", "");
 
         new vim.cmd(`caddexpr '${data}'`);
-        new vim.cmd("cbottom");
+        // new vim.cmd("cbottom");
         if (data.length > config.message_limit) data = `${data.sub(1, config.message_limit)}...`;
         handle.message = data;
     }
 
     let on_stdout_func = function (err, data) {
-        new vim.schedule(function () { append_qf_data(data); });
+        new vim.schedule(() => append_qf_data(data));
     }
 
     let on_stderr_func = function (err, data) {
-        let timer = new vim.loop.new_timer();
         // Either fully after or fully before. I prefer after
-        // vim.schedule(function() {
-        timer.start(10, 0, new vim.schedule_wrap(function () { append_qf_data(data) }));
+        new vim.defer_fn(function () { append_qf_data(data); }, 10);
+    }
+
+    let just_args = [
+        "-f",
+        justfile,
+        "-d",
+        ".",
+        task_name,
+    ]
+
+    for (let arg of args) {
+        new table.insert(just_args, arg);
+
     }
 
     async_worker = async.new({
-        command: "bash",
-        args: ["-c", `( ${command} )`],
+        // command: "bash",
+        // args: ["-c", `( ${command} )`],
+        command: "just",
+        args: just_args,
+        env: new vim.fn.environ(),
         cwd: new vim.fn.getcwd(),
         on_exit: function (j, ret) {
             let end_time = new os.clock() - start_time;
-            let timer = new vim.loop.new_timer();
-
-            timer.start(50, 0, new vim.schedule_wrap(function () {
+            new vim.defer_fn(function () {
                 let status = "";
                 if (async_worker == null) {
                     handle.message = "Cancelled";
@@ -312,13 +323,14 @@ function task_runner(task_name) {
                     }
                 }
                 async_worker = null;
-            }));
+            }, 50);
         },
         on_stdout: on_stdout_func,
-        on_stderr: on_stderr_func
+        on_stderr: on_stderr_func,
+        on_start: function() {
+            handle.message = `Executing task ${task_name}`;
+        }
     });
-
-    handle.message = `Executing task ${task_name}`;
 
     if (async_worker != null) async_worker.start();
 }

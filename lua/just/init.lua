@@ -289,14 +289,13 @@ local function task_runner(task_name)
 		if data == "" then
 			data = " "
 		end;
-		data = data.replace("warning", "Warning");
-		data = data.replace("info", "Info");
-		data = data.replace("error", "Error");
-		data = data.replace("note", "Note");
-		data = data.replace_all("'", "''");
-		data = data.replace_all("\0", "");
+		data = data:replace("warning", "Warning");
+		data = data:replace("info", "Info");
+		data = data:replace("error", "Error");
+		data = data:replace("note", "Note");
+		data = data:replace_all("'", "''");
+		data = data:replace_all("\0", "");
 		vim.cmd(string.format([=[caddexpr '%s']=], data));
-		vim.cmd("cbottom");
 		if # data > config.message_limit then
 			data = string.format([=[%s...]=], data:sub(1, config.message_limit))
 		end;
@@ -304,26 +303,32 @@ local function task_runner(task_name)
 	end;
 	local on_stdout_func = function(err, data)
 		vim.schedule(function()
-			append_qf_data(data)
+			return append_qf_data(data)
 		end)
 	end;
 	local on_stderr_func = function(err, data)
-		local timer = vim.loop.new_timer();
-		timer:start(10, 0, vim.schedule_wrap(function()
+		vim.defer_fn(function()
 			append_qf_data(data)
-		end))
+		end, 10)
+	end;
+	local just_args = {
+		"-f",
+		justfile,
+		"-d",
+		".",
+		task_name
+	};
+	for _, arg in ipairs(args) do
+		table.insert(just_args, arg)
 	end;
 	async_worker = async:new({
-		command = "bash",
-		args = {
-			"-c",
-			string.format([=[( %s )]=], command)
-		},
+		command = "just",
+		args = just_args,
+		env = vim.fn.environ(),
 		cwd = vim.fn.getcwd(),
 		on_exit = function(j, ret)
 			local end_time = os.clock() - start_time;
-			local timer = vim.loop.new_timer();
-			timer:start(50, 0, vim.schedule_wrap(function()
+			vim.defer_fn(function()
 				local status = "";
 				if async_worker == nil then
 					handle.message = "Cancelled";
@@ -379,12 +384,14 @@ local function task_runner(task_name)
 					end
 				end;
 				async_worker = nil
-			end))
+			end, 50)
 		end,
 		on_stdout = on_stdout_func,
-		on_stderr = on_stderr_func
+		on_stderr = on_stderr_func,
+		on_start = function()
+			handle.message = string.format([=[Executing task %s]=], task_name)
+		end
 	});
-	handle.message = string.format([=[Executing task %s]=], task_name);
 	if async_worker ~= nil then
 		async_worker:start()
 	end
