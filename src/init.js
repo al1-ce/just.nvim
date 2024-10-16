@@ -236,12 +236,12 @@ function task_runner(task_name) {
         // every type of compiler or something, so, replacing first
         // thing that there is is a fine compromise
         // If you don't like this just comment those
-        data = data.replace("warning", "Warning");
-        data = data.replace("info", "Info");
-        data = data.replace("error", "Error");
-        data = data.replace("note", "Note");
-        data = data.replace_all("'", "''");
-        data = data.replace_all("\0", "");
+        data = new data.replace("warning", "Warning");
+        data = new data.replace("info", "Info");
+        data = new data.replace("error", "Error");
+        data = new data.replace("note", "Note");
+        data = new data.replace_all("'", "''");
+        data = new data.replace_all("\0", "");
         // popup(data);
 
         new vim.cmd(`caddexpr '${data}'`);
@@ -261,7 +261,7 @@ function task_runner(task_name) {
         timer.start(10, 0, new vim.schedule_wrap(function () { append_qf_data(data) }));
     }
 
-    async_worker = async.new({
+    async_worker = new async.new({
         command: "bash",
         args: ["-c", `( ${command} )`],
         cwd: new vim.fn.getcwd(),
@@ -299,12 +299,12 @@ function task_runner(task_name) {
 
                 if (config.play_sound) {
                     if (ret == 0) {
-                        async.new({
+                        new async.new({
                             command: "aplay",
                             args: [`${get_config_dir()}/build_success.wav`, "-q"]
                         }).start();
                     } else {
-                        async.new({
+                        new async.new({
                             command: "aplay",
                             args: [`${get_config_dir()}/build_error.wav`, "-q"]
                         }).start();
