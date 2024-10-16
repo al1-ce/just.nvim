@@ -215,75 +215,50 @@ function task_runner(task_name) {
 
     let command = `just -f ${justfile} -d . ${task_name} ${new table.concat(args, " ")}`;
 
-    // SECTION: ASYNC RUNNER
-    // Own implementation depending on Plenary
-    // I'm doing it because I prefer having control over those things
-    // and AsyncRun was giving me some wierd errors at some places
-    // and I can make it even prettier
-    new vim.schedule(function () {
-        let should_open_qf = (config.copen_on_run && task_name == "run") || config.copen_on_any;
-        if (should_open_qf) new vim.cmd("copen");
-        new vim.fn.setqflist([{ text: `Starting task: ${command}` }, { text: "" }], 'r');
-        if (should_open_qf) new vim.cmd("wincmd p");
-    });
+    let should_open_qf = (config.copen_on_run && task_name == "run") || config.copen_on_any;
+    if (should_open_qf) new vim.cmd("copen");
+    new vim.fn.setqflist([{ text: `Starting task: ${command}` }, { text: "" }], 'r');
+    if (should_open_qf) new vim.cmd("wincmd p");
 
     let start_time = new os.clock();
 
-    function sleep(t) {
-        let sec = new os.clock() + t;
-        while (new os.clock() < sec) { }
+    let append_qf_data = function (data) {
+        if (async_worker == null) return;
+        // TURNS OUT some languages like DART output
+        // what should be in stderr to stdout
+        // so we're just going to caddexpr everything
+        if (data == "") data = " "; // punctuation space
+
+        // Replacing all lowercase types with capital ones because
+        // errorformat expects %t as capital letter
+        // A bit uncivilised but what can I do there tbh...
+        // It's not like anybody wants to write error parser for
+        // every type of compiler or something, so, replacing first
+        // thing that there is is a fine compromise
+        // If you don't like this just comment those
+        data = data.replace("warning", "Warning");
+        data = data.replace("info", "Info");
+        data = data.replace("error", "Error");
+        data = data.replace("note", "Note");
+        data = data.replace_all("'", "''");
+        data = data.replace_all("\0", "");
+        // popup(data);
+
+        new vim.cmd(`caddexpr '${data}'`);
+        new vim.cmd("cbottom");
+        if (data.length > config.message_limit) data = `${data.sub(1, config.message_limit)}...`;
+        handle.message = data;
     }
 
     let on_stdout_func = function (err, data) {
-        new vim.schedule(function () {
-            if (async_worker == null) return;
-            // TURNS OUT some languages like DART output
-            // what should be in stderr to stdout
-            // so we're just going to caddexpr everything
-            if (data == "") data = " "; // punctuation space
-
-            // Replacing all lowercase types with capital ones because
-            // errorformat expects %t as capital letter
-            // A bit uncivilised but what can I do there tbh...
-            // It's not like anybody wants to write error parser for
-            // every type of compiler or something, so, replacing first
-            // thing that there is is a fine compromise
-            // If you don't like this just comment those
-            data = data.replace("warning", "Warning");
-            data = data.replace("info", "Info");
-            data = data.replace("error", "Error");
-            data = data.replace("note", "Note");
-            data = data.replace_all("'", "''");
-            data = data.replace_all("\0", "");
-            // popup(data);
-
-            new vim.cmd(`caddexpr '${data}'`);
-            new vim.cmd("cbottom");
-            if (data.length > config.message_limit) data = `${data.sub(1, config.message_limit)}...`;
-            handle.message = data;
-        });
+        new vim.schedule(function () { append_qf_data(data); });
     }
 
     let on_stderr_func = function (err, data) {
         let timer = new vim.loop.new_timer();
         // Either fully after or fully before. I prefer after
         // vim.schedule(function() {
-        timer.start(10, 0, new vim.schedule_wrap(function () {
-            if (async_worker == null) return;
-            if (data == "") data = " "; // punctuation space
-            data = data.replace("warning", "Warning");
-            data = data.replace("info", "Info");
-            data = data.replace("error", "Error");
-            data = data.replace("note", "Note");
-            data = data.replace_all("'", "''");
-            data = data.replace_all("\0", "");
-
-            // popup(data);
-            new vim.cmd(`caddexpr '${data}'`);
-            new vim.cmd("cbottom");
-            if (data.length > config.message_limit) data = `${data.sub(1, config.message_limit)}...`;
-            handle.message = data;
-        }));
+        timer.start(10, 0, new vim.schedule_wrap(function () { append_qf_data(data) }));
     }
 
     async_worker = async.new({
@@ -312,7 +287,7 @@ function task_runner(task_name) {
                         if (config.copen_on_error) {
                             new vim.cmd("copen");
                             new vim.cmd("wincmd p");
-                            }
+                        }
                     }
                 }
                 new vim.fn.setqflist([
@@ -341,6 +316,8 @@ function task_runner(task_name) {
         on_stdout: on_stdout_func,
         on_stderr: on_stderr_func
     });
+
+    handle.message = `Executing task ${task_name}`;
 
     if (async_worker != null) async_worker.start();
 }

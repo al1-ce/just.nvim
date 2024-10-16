@@ -266,72 +266,51 @@ local function task_runner(task_name)
 		percentage = 0
 	});
 	local command = string.format([=[just -f %s -d . %s %s]=], justfile, task_name, table.concat(args, " "));
-	vim.schedule(function()
-		local should_open_qf = (config.copen_on_run and task_name == "run") or config.copen_on_any;
-		if should_open_qf then
-			vim.cmd("copen")
-		end;
-		vim.fn.setqflist({
-			{
-				text = string.format([=[Starting task: %s]=], command)
-			},
-			{
-				text = ""
-			}
-		}, 'r');
-		if should_open_qf then
-			vim.cmd("wincmd p")
-		end
-	end);
+	local should_open_qf = (config.copen_on_run and task_name == "run") or config.copen_on_any;
+	if should_open_qf then
+		vim.cmd("copen")
+	end;
+	vim.fn.setqflist({
+		{
+			text = string.format([=[Starting task: %s]=], command)
+		},
+		{
+			text = ""
+		}
+	}, 'r');
+	if should_open_qf then
+		vim.cmd("wincmd p")
+	end;
 	local start_time = os.clock();
-	local function sleep(t)
-		local sec = os.clock() + t;
-		while os.clock() < sec do
-		end
+	local append_qf_data = function(data)
+		if async_worker == nil then
+			return;
+		end;
+		if data == "" then
+			data = " "
+		end;
+		data = data:replace("warning", "Warning");
+		data = data:replace("info", "Info");
+		data = data:replace("error", "Error");
+		data = data:replace("note", "Note");
+		data = data:replace_all("'", "''");
+		data = data:replace_all("\0", "");
+		vim.cmd(string.format([=[caddexpr '%s']=], data));
+		vim.cmd("cbottom");
+		if # data > config.message_limit then
+			data = string.format([=[%s...]=], data:sub(1, config.message_limit))
+		end;
+		handle.message = data
 	end;
 	local on_stdout_func = function(err, data)
 		vim.schedule(function()
-			if async_worker == nil then
-				return;
-			end;
-			if data == "" then
-				data = " "
-			end;
-			data = data:replace("warning", "Warning");
-			data = data:replace("info", "Info");
-			data = data:replace("error", "Error");
-			data = data:replace("note", "Note");
-			data = data:replace_all("'", "''");
-			data = data:replace_all("\0", "");
-			vim.cmd(string.format([=[caddexpr '%s']=], data));
-			vim.cmd("cbottom");
-			if # data > config.message_limit then
-				data = string.format([=[%s...]=], data:sub(1, config.message_limit))
-			end;
-			handle.message = data
+			append_qf_data(data)
 		end)
 	end;
 	local on_stderr_func = function(err, data)
 		local timer = vim.loop.new_timer();
 		timer:start(10, 0, vim.schedule_wrap(function()
-			if async_worker == nil then
-				return;
-			end;
-			if data == "" then
-				data = " "
-			end;
-			data = data:replace("warning", "Warning");
-			data = data:replace("info", "Info");
-			data = data:replace("error", "Error");
-			data = data:replace("note", "Note");
-			data = data:replace_all("'", "''");
-			data = data:replace_all("\0", "");
-			vim.cmd(string.format([=[caddexpr '%s']=], data));
-			vim.cmd("cbottom");
-			if # data > config.message_limit then
-				data = string.format([=[%s...]=], data:sub(1, config.message_limit))
-			end;
-			handle.message = data
+			append_qf_data(data)
 		end))
 	end;
 	async_worker = async:new({
@@ -405,6 +384,7 @@ local function task_runner(task_name)
 		on_stdout = on_stdout_func,
 		on_stderr = on_stderr_func
 	});
+	handle.message = string.format([=[Executing task %s]=], task_name);
 	if async_worker ~= nil then
 		async_worker:start()
 	end
