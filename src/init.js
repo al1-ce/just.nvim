@@ -167,31 +167,29 @@ function get_task_args(task_name) {
     let task_args = task_signature.split(' ');
     new table.shift(task_args);
 
-    return [];
+    if (task_args.length == 0) return [];
+    let out_args = [];
 
-    // if (task_args.length == 0) return [];
-    // let out_args = [];
-    //
-    // for (let i = 0; i < task_args.length; ++i) {
-    //     let arg = task_args[i + 1];
-    //     let keyword = check_keyword_arg(arg);
-    //     if (keyword == ' ') {
-    //         let ask = "";
-    //         if (arg.contains('=')) {
-    //             let arg_comp = arg.split('=');
-    //             ask = new vim.fn.input(`${arg_comp[1]}: `, arg_comp[2]);
-    //         } else {
-    //             ask = new vim.fn.input(`${arg}: `, "");
-    //         }
-    //
-    //         new table.insert(out_args, `${ask}`);
-    //     } else {
-    //         if (keyword == "") keyword = ' ';
-    //         new table.insert(out_args, `${keyword}`);
-    //     }
-    // }
-    //
-    // return out_args;
+    for (let i = 0; i < task_args.length; ++i) {
+        let arg = task_args[i + 1];
+        let keyword = check_keyword_arg(arg);
+        if (keyword == ' ') {
+            let ask = "";
+            if (arg.contains('=')) {
+                let arg_comp = arg.split('=');
+                ask = new vim.fn.input(`${arg_comp[1]}: `, arg_comp[2]);
+            } else {
+                ask = new vim.fn.input(`${arg}: `, "");
+            }
+
+            new table.insert(out_args, `${ask}`);
+        } else {
+            if (keyword == "") keyword = ' ';
+            new table.insert(out_args, `${keyword}`);
+        }
+    }
+
+    return out_args;
 }
 
 function task_runner(task_name) {

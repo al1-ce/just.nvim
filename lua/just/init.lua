@@ -193,7 +193,37 @@ local function get_task_args(task_name)
     local task_signature = task_info:split(":")[1]
     local task_args = task_signature:split(" ")
     table.shift(task_args)
-    return {}
+    if #task_args == 0 then
+        return {}
+    end
+    local out_args = {}
+    do
+        local i = 0
+        while i < #task_args do
+            local arg = task_args[i + 1]
+            local keyword = check_keyword_arg(arg)
+            if keyword == " " then
+                local ask = ""
+                if arg:contains("=") then
+                    local arg_comp = arg:split("=")
+                    ask = vim.fn.input(string.format([=[%s: ]=], arg_comp[1]), arg_comp[2])
+                else
+                    ask = vim.fn.input(string.format([=[%s: ]=], arg), "")
+                end
+                table.insert(out_args, string.format([=[%s]=], ask))
+            else
+                if keyword == "" then
+                    keyword = " "
+                end
+                table.insert(out_args, string.format([=[%s]=], keyword))
+            end
+            (function()
+                i = i + 1
+                return i
+            end)()
+        end
+    end
+    return out_args
 end
 local function task_runner(task_name)
     if async_worker ~= nil then
