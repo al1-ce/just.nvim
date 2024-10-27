@@ -194,7 +194,7 @@ local function get_task_args(task_name)
     local task_args = task_signature:split(" ")
     table.shift(task_args)
     if #task_args == 0 then
-        return {}
+        return {args = {}, all = true, fail = false}
     end
     local out_args = {}
     do
@@ -210,6 +210,10 @@ local function get_task_args(task_name)
                 else
                     ask = vim.fn.input(string.format([=[%s: ]=], arg), "")
                 end
+                if string.format([=[%s]=], ask) == "" then
+                    error("Must provide a valid argument")
+                    return {args = {}, all = false, fail = true}
+                end
                 table.insert(out_args, string.format([=[%s]=], ask))
             else
                 if keyword == "" then
@@ -223,14 +227,22 @@ local function get_task_args(task_name)
             end)()
         end
     end
-    return out_args
+    return {args = out_args, all = #out_args == #task_args, fail = false}
 end
 local function task_runner(task_name)
     if async_worker ~= nil then
         error("Task is already running")
         return
     end
-    local args = get_task_args(task_name)
+    local arg_obj = get_task_args(task_name)
+    if arg_obj.fail then
+        return
+    end
+    if arg_obj.all ~= true then
+        error("Failed to get all arguments or not enough arguments supplied")
+        return
+    end
+    local args = arg_obj.args
     local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
     if vim.fn.filereadable(justfile) ~= 1 then
         error("Justfile not found in project directory")
@@ -444,23 +456,21 @@ local function run_task_name(task_name)
     warning("Could not find just task. \nPlease select task from list.")
     run_task_select()
 end
-local function run_task_default()
-    run_task_name("default")
-end
-local function run_task_build()
-    run_task_name("build")
-end
-local function run_task_run()
-    run_task_name("run")
-end
-local function run_task_test()
-    run_task_name("test")
-end
 local function stop_current_task()
     if async_worker ~= nil then
         async_worker:shutdown()
     end
     async_worker = nil
+end
+local function run_task_cmd(args)
+    if args.bang then
+        stop_current_task()
+    end
+    if #args.fargs == 0 then
+        run_task_name("default")
+    else
+        run_task_name(args.fargs[1])
+    end
 end
 local function add_task_template()
     local justfile = string.format([=[%s/justfile]=], vim.fn.getcwd())
@@ -572,17 +582,18 @@ local function setup(opts)
         get_subtable_option(opts, "telescope_borders", "results", config.telescope_borders.results)
     config.telescope_borders.preview =
         get_subtable_option(opts, "telescope_borders", "preview", config.telescope_borders.preview)
-    vim.api.nvim_create_user_command("JustDefault", run_task_default, {desc = "Run default task with just"})
-    vim.api.nvim_create_user_command("JustBuild", run_task_build, {desc = "Run build task with just"})
-    vim.api.nvim_create_user_command("JustRun", run_task_run, {desc = "Run run task with just"})
-    vim.api.nvim_create_user_command("JustTest", run_task_test, {desc = "Run test task with just"})
-    vim.api.nvim_create_user_command("JustSelect", run_task_select, {desc = "Open task picker"})
-    vim.api.nvim_create_user_command("JustStop", stop_current_task, {desc = "Stops current task"})
-    vim.api.nvim_create_user_command("JustCreateTemplate", add_task_template, {desc = "Creates template for just"})
+    vim.api.nvim_create_user_command("Just", run_task_cmd, {nargs = "?", bang = true, desc = "Run task"})
+    vim.api.nvim_create_user_command("JustSelect", run_task_select, {nargs = 0, desc = "Open task picker"})
+    vim.api.nvim_create_user_command("JustStop", stop_current_task, {nargs = 0, desc = "Stops current task"})
+    vim.api.nvim_create_user_command(
+        "JustCreateTemplate",
+        add_task_template,
+        {nargs = 0, desc = "Creates template for just"}
+    )
     vim.api.nvim_create_user_command(
         "JustMakeTemplate",
         add_make_task_template,
-        {desc = "Creates make-like template for just"}
+        {nargs = 0, desc = "Creates make-like template for just"}
     )
     if config.play_sound and vim.fn.executable("aplay") ~= 1 then
         config.play_sound = false
@@ -592,10 +603,6 @@ end
 _M.task_select = task_select
 _M.run_task_select = run_task_select
 _M.run_task_name = run_task_name
-_M.run_task_default = run_task_default
-_M.run_task_build = run_task_build
-_M.run_task_run = run_task_run
-_M.run_task_test = run_task_test
 _M.stop_current_task = stop_current_task
 _M.add_task_template = add_task_template
 _M.add_make_task_template = add_make_task_template

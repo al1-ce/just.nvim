@@ -1,7 +1,7 @@
 # Building using just
 
 ## Basic justfile configuration
-This configuration if called with `JustBuild` from any Lua file will execute `init.lua` in project root (pwd/cwd) directory.
+This configuration if called with `Just build` from any Lua file will execute `init.lua` in project root (pwd/cwd) directory.
 ```conf
 # Runs lua project
 build:

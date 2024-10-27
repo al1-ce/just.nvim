@@ -167,7 +167,7 @@ function get_task_args(task_name) {
     let task_args = task_signature.split(' ');
     new table.shift(task_args);
 
-    if (task_args.length == 0) return [];
+    if (task_args.length == 0) return {args: [], all: true, fail: false};
     let out_args = [];
 
     for (let i = 0; i < task_args.length; ++i) {
@@ -182,6 +182,11 @@ function get_task_args(task_name) {
                 ask = new vim.fn.input(`${arg}: `, "");
             }
 
+            if (`${ask}` == "") {
+                error("Must provide a valid argument");
+                return { args: [], all: false, fail: true };
+            }
+
             new table.insert(out_args, `${ask}`);
         } else {
             if (keyword == "") keyword = ' ';
@@ -189,7 +194,7 @@ function get_task_args(task_name) {
         }
     }
 
-    return out_args;
+    return {args: out_args, all: out_args.length == task_args.length, fail: false};
 }
 
 function task_runner(task_name) {
@@ -198,7 +203,16 @@ function task_runner(task_name) {
         return;
     }
 
-    let args = get_task_args(task_name);
+    let arg_obj = get_task_args(task_name);
+
+    if (arg_obj.fail) return;
+    if (arg_obj.all != true) {
+        error("Failed to get all arguments or not enough arguments supplied");
+        return;
+    }
+
+    let args = arg_obj.args;
+
     let justfile = `${new vim.fn.getcwd()}/justfile`;
 
     if (new vim.fn.filereadable(justfile) != 1) {
@@ -403,17 +417,19 @@ export function run_task_name(task_name) {
     run_task_select();
 }
 
-export function run_task_default() { run_task_name("default"); }
-
-export function run_task_build() { run_task_name("build"); }
-
-export function run_task_run() { run_task_name("run"); }
-
-export function run_task_test() { run_task_name("test"); }
-
 export function stop_current_task() {
     if (async_worker != null) async_worker.shutdown();
     async_worker = null;
+}
+
+function run_task_cmd(args) {
+    if (args.bang) stop_current_task();
+
+    if (args.fargs.length == 0) {
+        run_task_name("default");
+    } else {
+        run_task_name(args.fargs[1]);
+    }
 }
 
 export function add_task_template() {
@@ -522,14 +538,11 @@ export function setup(opts) {
     config.telescope_borders.results = get_subtable_option(opts, "telescope_borders", "results", config.telescope_borders.results);
     config.telescope_borders.preview = get_subtable_option(opts, "telescope_borders", "preview", config.telescope_borders.preview);
 
-    new vim.api.nvim_create_user_command("JustDefault", run_task_default, { desc: "Run default task with just" })
-    new vim.api.nvim_create_user_command("JustBuild", run_task_build, { desc: "Run build task with just" })
-    new vim.api.nvim_create_user_command("JustRun", run_task_run, { desc: "Run run task with just" })
-    new vim.api.nvim_create_user_command("JustTest", run_task_test, { desc: "Run test task with just" })
-    new vim.api.nvim_create_user_command("JustSelect", run_task_select, { desc: "Open task picker" })
-    new vim.api.nvim_create_user_command("JustStop", stop_current_task, { desc: "Stops current task" })
-    new vim.api.nvim_create_user_command("JustCreateTemplate", add_task_template, { desc: "Creates template for just" })
-    new vim.api.nvim_create_user_command("JustMakeTemplate", add_make_task_template, { desc: "Creates make-like template for just" })
+    new vim.api.nvim_create_user_command("Just", run_task_cmd, { nargs: "?", bang: true, desc: "Run task" })
+    new vim.api.nvim_create_user_command("JustSelect", run_task_select, { nargs: 0, desc: "Open task picker" })
+    new vim.api.nvim_create_user_command("JustStop", stop_current_task, { nargs: 0, desc: "Stops current task" })
+    new vim.api.nvim_create_user_command("JustCreateTemplate", add_task_template, { nargs: 0, desc: "Creates template for just" })
+    new vim.api.nvim_create_user_command("JustCreateMakeTemplate", add_make_task_template, { nargs: 0, desc: "Creates make-like template for just" })
 
     if (config.play_sound && new vim.fn.executable("aplay") != 1) {
         config.play_sound = false;
