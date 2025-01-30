@@ -241,6 +241,7 @@ function task_runner(task_name) {
         // TURNS OUT some languages like DART output
         // what should be in stderr to stdout
         // so we're just going to caddexpr everything
+        if (data == nil) data = "";
         if (data == "") data = " "; // punctuation space
 
         // Replacing all lowercase types with capital ones because

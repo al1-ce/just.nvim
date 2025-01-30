@@ -271,6 +271,9 @@ local function task_runner(task_name)
         if async_worker == nil then
             return
         end
+        if data == nil then
+            data = ""
+        end
         if data == "" then
             data = " "
         end
@@ -591,7 +594,7 @@ local function setup(opts)
         {nargs = 0, desc = "Creates template for just"}
     )
     vim.api.nvim_create_user_command(
-        "JustMakeTemplate",
+        "JustCreateMakeTemplate",
         add_make_task_template,
         {nargs = 0, desc = "Creates make-like template for just"}
     )
