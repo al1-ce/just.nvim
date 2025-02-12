@@ -17,30 +17,52 @@ let config = {
     }
 };
 
-const pickers = require("telescope.pickers");
-const finders = require("telescope.finders");
-const conf = require("telescope.config").values;
-const actions = require("telescope.actions");
-const action_state = require("telescope.actions.state");
-const themes = require("telescope.themes");
+function can_load(module) {
+    let ok = pack2(pcall(require, module))[1];
+    return ok;
+}
+
 const async = require("plenary.job");
-const progress = require("fidget.progress");
-const notify = require("notify");
 
-let async_worker = null;
+let progress = null;
+let notify;
 
-function popup(message, errlvl = "info", title = "Info") {
-    let ok = pack2(pcall(require, "notify"))[1];
-    if (!ok) {
-        // TODO: add log option
+let pickers = null;
+let finders;
+let conf;
+let actions;
+let action_state;
+let themes;
+
+if (can_load("telescope")) {
+    pickers = require("telescope.pickers");
+    finders = require("telescope.finders");
+    conf = require("telescope.config").values;
+    actions = require("telescope.actions");
+    action_state = require("telescope.actions.state");
+    themes = require("telescope.themes");
+}
+
+if (can_load("fidget")) {
+    progress = require("fidget.progress");
+}
+
+if (can_load("notify")) {
+    notify = require("notify");
+} else {
+    notify = function(msg, errlvl, title) {
         if (errlvl == "error") {
             new vim.api.nvim_err_writeln(message);
         } else {
             new vim.api.nvim_echo([[message, "Normal"]], false, {})
         }
-    } else {
-        notify(message, errlvl, { title: title });
     }
+}
+
+let async_worker = null;
+
+function popup(message, errlvl = "info", title = "Info") {
+    notify(message, errlvl, { title: title });
 }
 
 function info(message) {
@@ -105,10 +127,14 @@ function get_task_names(lang = "") {
                 new table.shift(parts);
                 out = `${out}${new table.concat(parts, ' ')}`;
             }
-            let width = 34;
-            let repeatNum = new math.max(0, width - out.length);
-            out = `${out}${' '.repeat(repeatNum)} ${comment == null ? "" : comment}`;
-            new table.insert(tbl, [out, name]);
+            if (pickers != null) {
+                let width = 34;
+                let repeatNum = new math.max(0, width - out.length);
+                out = `${out}${' '.repeat(repeatNum)} ${comment == null ? "" : comment}`;
+                new table.insert(tbl, [out, name]);
+            } else {
+                new table.insert(tbl, out);
+            }
             let _null;
         }
     }
@@ -220,12 +246,15 @@ function task_runner(task_name) {
         return;
     }
 
-    let handle = new progress.handle.create({
-        title: "",
-        message: `Starting task "${task_name}"`,
-        lsp_client: { name: "Just" },
-        percentage: 0
-    });
+    let handle = null;
+    if (progress != null) {
+        handle = new progress.handle.create({
+            title: "",
+            message: `Starting task "${task_name}"`,
+            lsp_client: { name: "Just" },
+            percentage: 0
+        });
+    }
 
     let command = `just -f ${justfile} -d . ${task_name} ${new table.concat(args, " ")}`;
 
@@ -261,7 +290,7 @@ function task_runner(task_name) {
         new vim.cmd(`caddexpr '${data}'`);
         // new vim.cmd("cbottom");
         if (data.length > config.message_limit) data = `${data.sub(1, config.message_limit)}...`;
-        handle.message = data;
+        if (handle != null) handle.message = data;
     }
 
     let on_stdout_func = function (err, data) {
@@ -299,17 +328,23 @@ function task_runner(task_name) {
             new vim.defer_fn(function () {
                 let status = "";
                 if (async_worker == null) {
-                    handle.message = "Cancelled";
-                    handle.cancel();
+                    if (handle != null) {
+                        handle.message = "Cancelled";
+                        handle.cancel();
+                    }
                     status = "Cancelled";
                 } else {
                     if (ret == 0) {
-                        handle.message = "Finished";
-                        handle.finish();
+                        if (handle != null) {
+                            handle.message = "Finished";
+                            handle.finish();
+                        }
                         status = "Finished";
                     } else {
-                        handle.message = "Failed";
-                        handle.finish();
+                        if (handle != null) {
+                            handle.message = "Failed";
+                            handle.finish();
+                        }
                         status = "Failed";
                         if (config.copen_on_error) {
                             new vim.cmd("copen");
@@ -343,7 +378,7 @@ function task_runner(task_name) {
         on_stdout: on_stdout_func,
         on_stderr: on_stderr_func,
         on_start: function() {
-            handle.message = `Executing task ${task_name}`;
+            if (handle != null) handle.message = `Executing task ${task_name}`;
         }
     });
 
@@ -361,32 +396,40 @@ export function task_select(opts) {
     //     // TODO: implement
     // }
 
-    let picker = new pickers.new(opts, {
-        prompt_title: "Just tasks",
-        border: {},
-        borderchars: config.telescope_borders.preview,
-        finder: new finders.new_table({
-            results: tasks,
-            entry_maker: (entry) => {
-                return {
-                    value: entry,
-                    display: entry[1],
-                    ordinal: entry[1]
+    if (pickers != null) {
+        let picker = new pickers.new(opts, {
+            prompt_title: "Just tasks",
+            border: {},
+            borderchars: config.telescope_borders.preview,
+            finder: new finders.new_table({
+                results: tasks,
+                entry_maker: (entry) => {
+                    return {
+                        value: entry,
+                        display: entry[1],
+                        ordinal: entry[1]
+                    }
                 }
+            }),
+            sorter: new conf.generic_sorter(opts),
+            attach_mappings: (buf, map) => {
+                actions.select_default.replace(() => {
+                    new actions.close(buf);
+                    let selection = new action_state.get_selected_entry();
+                    let build_name = selection.value[2];
+                    task_runner(build_name);
+                });
+                return true;
             }
-        }),
-        sorter: new conf.generic_sorter(opts),
-        attach_mappings: (buf, map) => {
-            actions.select_default.replace(() => {
-                new actions.close(buf);
-                let selection = new action_state.get_selected_entry();
-                let build_name = selection.value[2];
-                task_runner(build_name);
-            });
-            return true;
-        }
-    });
-    picker.find();
+        });
+        picker.find();
+    } else {
+        new vim.ui.select(tasks, {
+            prompt: "Select task"
+        }, function(choice) {
+            task_runner(choice);
+        });
+    }
 }
 
 export function run_task_select() {
@@ -396,7 +439,11 @@ export function run_task_select() {
         return;
     }
 
-    task_select(new themes.get_dropdown({ borderchars: config.telescope_borders }));
+    if (pickers != null) {
+        task_select(new themes.get_dropdown({ borderchars: config.telescope_borders }));
+    } else {
+        task_select();
+    }
 }
 
 export function run_task_name(task_name) {

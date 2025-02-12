@@ -13,15 +13,41 @@ local config = {
         preview = {"─", "│", "─", "│", "┌", "┐", "┘", "└"}
     }
 }
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local conf = require("telescope.config").values
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local themes = require("telescope.themes")
+local function can_load(module)
+    local ok = pack2(pcall(require, module))[1]
+    return ok
+end
 local async = require("plenary.job")
-local progress = require("fidget.progress")
-local notify = require("notify")
+local progress = nil
+local notify
+local pickers = nil
+local finders
+local conf
+local actions
+local action_state
+local themes
+if can_load("telescope") then
+    pickers = require("telescope.pickers")
+    finders = require("telescope.finders")
+    conf = require("telescope.config").values
+    actions = require("telescope.actions")
+    action_state = require("telescope.actions.state")
+    themes = require("telescope.themes")
+end
+if can_load("fidget") then
+    progress = require("fidget.progress")
+end
+if can_load("notify") then
+    notify = require("notify")
+else
+    notify = function(msg, errlvl, title)
+        if errlvl == "error" then
+            vim.api.nvim_err_writeln(message)
+        else
+            vim.api.nvim_echo({{message, "Normal"}}, false, {})
+        end
+    end
+end
 local async_worker = nil
 local function popup(message, errlvl, title)
     if errlvl == nil then
@@ -30,16 +56,7 @@ local function popup(message, errlvl, title)
     if title == nil then
         title = "Info"
     end
-    local ok = pack2(pcall(require, "notify"))[1]
-    if not ok then
-        if errlvl == "error" then
-            vim.api.nvim_err_writeln(message)
-        else
-            vim.api.nvim_echo({{message, "Normal"}}, false, {})
-        end
-    else
-        notify(message, errlvl, {title = title})
-    end
+    notify(message, errlvl, {title = title})
 end
 local function info(message)
     popup(message, "info", "Just")
@@ -105,25 +122,29 @@ local function get_task_names(lang)
                     table.shift(parts)
                     out = string.format([=[%s%s]=], out, table.concat(parts, " "))
                 end
-                local width = 34
-                local repeatNum = math.max(0, width - #out)
-                out =
-                    string.format(
-                    [=[%s%s %s]=],
-                    out,
-                    (function()
-                        local __tmp = " "
-                        return __tmp["repeat"](__tmp, repeatNum)
-                    end)(),
-                    (function()
-                        if comment == nil then
-                            return ""
-                        else
-                            return comment
-                        end
-                    end)()
-                )
-                table.insert(tbl, {out, name})
+                if pickers ~= nil then
+                    local width = 34
+                    local repeatNum = math.max(0, width - #out)
+                    out =
+                        string.format(
+                        [=[%s%s %s]=],
+                        out,
+                        (function()
+                            local __tmp = " "
+                            return __tmp["repeat"](__tmp, repeatNum)
+                        end)(),
+                        (function()
+                            if comment == nil then
+                                return ""
+                            else
+                                return comment
+                            end
+                        end)()
+                    )
+                    table.insert(tbl, {out, name})
+                else
+                    table.insert(tbl, out)
+                end
                 local _null
             end
             ::continue::
@@ -248,15 +269,18 @@ local function task_runner(task_name)
         error("Justfile not found in project directory")
         return
     end
-    local handle =
-        progress.handle.create(
-        {
-            title = "",
-            message = string.format([=[Starting task "%s"]=], task_name),
-            lsp_client = {name = "Just"},
-            percentage = 0
-        }
-    )
+    local handle = nil
+    if progress ~= nil then
+        handle =
+            progress.handle.create(
+            {
+                title = "",
+                message = string.format([=[Starting task "%s"]=], task_name),
+                lsp_client = {name = "Just"},
+                percentage = 0
+            }
+        )
+    end
     local command = string.format([=[just -f %s -d . %s %s]=], justfile, task_name, table.concat(args, " "))
     local should_open_qf = (config.copen_on_run and task_name == "run") or config.copen_on_any
     if should_open_qf then
@@ -287,7 +311,9 @@ local function task_runner(task_name)
         if #data > config.message_limit then
             data = string.format([=[%s...]=], data:sub(1, config.message_limit))
         end
-        handle.message = data
+        if handle ~= nil then
+            handle.message = data
+        end
     end
     local on_stdout_func = function(err, data)
         vim.schedule(
@@ -320,17 +346,23 @@ local function task_runner(task_name)
                     function()
                         local status = ""
                         if async_worker == nil then
-                            handle.message = "Cancelled"
-                            handle:cancel()
+                            if handle ~= nil then
+                                handle.message = "Cancelled"
+                                handle:cancel()
+                            end
                             status = "Cancelled"
                         else
                             if ret == 0 then
-                                handle.message = "Finished"
-                                handle:finish()
+                                if handle ~= nil then
+                                    handle.message = "Finished"
+                                    handle:finish()
+                                end
                                 status = "Finished"
                             else
-                                handle.message = "Failed"
-                                handle:finish()
+                                if handle ~= nil then
+                                    handle.message = "Failed"
+                                    handle:finish()
+                                end
                                 status = "Failed"
                                 if config.copen_on_error then
                                     vim.cmd("copen")
@@ -379,7 +411,9 @@ local function task_runner(task_name)
             on_stdout = on_stdout_func,
             on_stderr = on_stderr_func,
             on_start = function()
-                handle.message = string.format([=[Executing task %s]=], task_name)
+                if handle ~= nil then
+                    handle.message = string.format([=[Executing task %s]=], task_name)
+                end
             end
         }
     )
@@ -395,36 +429,46 @@ local function task_select(opts)
     if #tasks == 0 then
         return
     end
-    local picker =
-        pickers.new(
-        opts,
-        {
-            prompt_title = "Just tasks",
-            border = {},
-            borderchars = config.telescope_borders.preview,
-            finder = finders.new_table(
-                {
-                    results = tasks,
-                    entry_maker = function(entry)
-                        return {value = entry, display = entry[1], ordinal = entry[1]}
-                    end
-                }
-            ),
-            sorter = conf.generic_sorter(opts),
-            attach_mappings = function(buf, map)
-                actions.select_default:replace(
-                    function()
-                        actions.close(buf)
-                        local selection = action_state.get_selected_entry()
-                        local build_name = selection.value[2]
-                        task_runner(build_name)
-                    end
-                )
-                return true
+    if pickers ~= nil then
+        local picker =
+            pickers.new(
+            opts,
+            {
+                prompt_title = "Just tasks",
+                border = {},
+                borderchars = config.telescope_borders.preview,
+                finder = finders.new_table(
+                    {
+                        results = tasks,
+                        entry_maker = function(entry)
+                            return {value = entry, display = entry[1], ordinal = entry[1]}
+                        end
+                    }
+                ),
+                sorter = conf.generic_sorter(opts),
+                attach_mappings = function(buf, map)
+                    actions.select_default:replace(
+                        function()
+                            actions.close(buf)
+                            local selection = action_state.get_selected_entry()
+                            local build_name = selection.value[2]
+                            task_runner(build_name)
+                        end
+                    )
+                    return true
+                end
+            }
+        )
+        picker:find()
+    else
+        vim.ui.select(
+            tasks,
+            {prompt = "Select task"},
+            function(choice)
+                task_runner(choice)
             end
-        }
-    )
-    picker:find()
+        )
+    end
 end
 local function run_task_select()
     local tasks = get_task_names()
@@ -432,7 +476,11 @@ local function run_task_select()
         warning("There are no tasks defined in justfile")
         return
     end
-    task_select(themes.get_dropdown({borderchars = config.telescope_borders}))
+    if pickers ~= nil then
+        task_select(themes.get_dropdown({borderchars = config.telescope_borders}))
+    else
+        task_select()
+    end
 end
 local function run_task_name(task_name)
     local tasks = get_task_names()
